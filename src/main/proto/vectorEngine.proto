@@ -1,0 +1,190 @@
+syntax = "proto3";
+package proto;
+
+option java_multiple_files = true;
+option java_package = "com.weibo.weivectorapp.rpc";
+option java_outer_classname = "VectorProto";
+
+/**
+* Create collection in milvus
+*/
+message CreateCollectionRequest {
+  // The unique collection name in milvus.(Required)
+  string collection_name = 1;
+  // The serialized `schema.CollectionSchema`(Required)
+  CollectionSchema schema = 2;
+  // Once set, no modification is allowed (Optional)
+  // https://github.com/milvus-io/milvus/issues/6690
+  int32 shards_num = 3;
+  // The consistency level that the collection used, modification is not supported now.
+  ConsistencyLevel consistency_level = 4;
+  repeated KeyValuePair properties = 5;
+  int64 num_partitions = 6; // num of default physical partitions, only used in partition key mode and changes are not supported
+}
+
+/**
+ * @brief Collection schema
+ */
+message CollectionSchema {
+  string name = 1;
+  string description = 2;
+  bool autoID = 3; // deprecated later, keep compatible with c++ part now
+  repeated FieldSchema fields = 4;
+}
+
+/**
+ * @brief Field schema
+ */
+message FieldSchema {
+  int64 fieldID = 1;
+  string name = 2;
+  bool is_primary_key = 3;
+  string description = 4;
+  DataType data_type = 5;
+  repeated KeyValuePair type_params = 6;
+  repeated KeyValuePair index_params = 7;
+  bool autoID = 8;
+  FieldState state = 9; // To keep compatible with older version, the default
+  // state is `Created`.
+  DataType element_type = 10; // For array type, the element type is stored here
+  ValueField default_value = 11; // default_value only support scalars except array and json for now
+  bool is_dynamic = 12; // mark whether this field is the dynamic field
+  bool is_partition_key = 13; // enable logic partitions
+}
+
+enum FieldState {
+  FieldCreated = 0;
+  FieldCreating = 1;
+  FieldDropping = 2;
+  FieldDropped = 3;
+}
+
+
+message ValueField {
+  oneof data {
+    bool bool_data = 1;
+    int32 int_data = 2;
+    int64 long_data = 3;
+    float float_data = 4;
+    double double_data = 5;
+    string string_data = 6;
+    bytes bytes_data = 7;
+  }
+}
+
+/**
+ * @brief Field data type
+ */
+enum DataType {
+  None = 0;
+  Bool = 1;
+  Int8 = 2;
+  Int16 = 3;
+  Int32 = 4;
+  Int64 = 5;
+
+  Float = 10;
+  Double = 11;
+
+  String = 20;
+  VarChar = 21; // variable-length strings with a specified maximum length
+  Array = 22;
+  JSON = 23;
+
+  BinaryVector = 100;
+  FloatVector = 101;
+  Float16Vector = 102;
+}
+
+enum ConsistencyLevel {
+  Strong = 0;
+  Session = 1; // default in PyMilvus
+  Bounded = 2;
+  Eventually = 3;
+  Customized = 4; // Users pass their own `guarantee_timestamp`.
+}
+
+message KeyValuePair {
+  string key = 1;
+  string value = 2;
+}
+
+message Status {
+  ErrorCode error_code = 1;
+  string reason = 2;
+  int32 code = 3;
+}
+
+// Deprecated
+enum ErrorCode {
+  Success = 0;
+  UnexpectedError = 1;
+  ConnectFailed = 2;
+  PermissionDenied = 3;
+  CollectionNotExists = 4;
+  IllegalArgument = 5;
+  IllegalDimension = 7;
+  IllegalIndexType = 8;
+  IllegalCollectionName = 9;
+  IllegalTOPK = 10;
+  IllegalRowRecord = 11;
+  IllegalVectorID = 12;
+  IllegalSearchResult = 13;
+  FileNotFound = 14;
+  MetaFailed = 15;
+  CacheFailed = 16;
+  CannotCreateFolder = 17;
+  CannotCreateFile = 18;
+  CannotDeleteFolder = 19;
+  CannotDeleteFile = 20;
+  BuildIndexError = 21;
+  IllegalNLIST = 22;
+  IllegalMetricType = 23;
+  OutOfMemory = 24;
+  IndexNotExist = 25;
+  EmptyCollection = 26;
+  UpdateImportTaskFailure = 27;
+  CollectionNameNotFound = 28;
+  CreateCredentialFailure = 29;
+  UpdateCredentialFailure = 30;
+  DeleteCredentialFailure = 31;
+  GetCredentialFailure = 32;
+  ListCredUsersFailure = 33;
+  GetUserFailure = 34;
+  CreateRoleFailure = 35;
+  DropRoleFailure = 36;
+  OperateUserRoleFailure = 37;
+  SelectRoleFailure = 38;
+  SelectUserFailure = 39;
+  SelectResourceFailure = 40;
+  OperatePrivilegeFailure = 41;
+  SelectGrantFailure = 42;
+  RefreshPolicyInfoCacheFailure = 43;
+  ListPolicyFailure = 44;
+  NotShardLeader = 45;
+  NoReplicaAvailable = 46;
+  SegmentNotFound = 47;
+  ForceDeny = 48;
+  RateLimit = 49;
+  NodeIDNotMatch = 50;
+  UpsertAutoIDTrue = 51;
+  InsufficientMemoryToLoad = 52;
+  MemoryQuotaExhausted = 53;
+  DiskQuotaExhausted = 54;
+  TimeTickLongDelay = 55;
+  NotReadyServe = 56;
+  // Coord is switching from standby mode to active mode
+  NotReadyCoordActivating = 57;
+
+  // Service availability.
+  // NA: Not Available.
+  DataCoordNA = 100;
+
+  // internal error code.
+  DDRequestRace = 1000;
+}
+
+service RpcService {
+  rpc CreateCollection(CreateCollectionRequest) returns (Status) {}
+
+}

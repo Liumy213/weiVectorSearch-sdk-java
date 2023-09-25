@@ -2,7 +2,7 @@ syntax = "proto3";
 package proto;
 
 option java_multiple_files = true;
-option java_package = "com.weibo.weivectorapp.rpc";
+option java_package = "com.weibo.weivectorsearch.rpc";
 option java_outer_classname = "VectorProto";
 
 /**
@@ -184,7 +184,7 @@ enum ErrorCode {
   DDRequestRace = 1000;
 }
 
-service RpcService {
+service VectorSearchService {
   rpc CreateCollection(CreateCollectionRequest) returns (Status) {}
 
 }

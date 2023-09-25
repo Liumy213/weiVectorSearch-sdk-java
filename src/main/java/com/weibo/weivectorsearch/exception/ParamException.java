@@ -22,8 +22,8 @@ package com.weibo.weivectorsearch.exception;
 /**
  * Exception for illegal parameters input.
  */
-public class ParamException extends VectorSearchException {
-    public ParamException(String msg) {
-        super(msg, R.Status.ParamError.getCode());
-    }
-}
+//public class ParamException extends VectorSearchException {
+//    public ParamException(String msg) {
+//        super(msg, R.Status.ParamError.getCode());
+//    }
+//}

@@ -1,7 +1,7 @@
 package com.weibo.weivectorsearch.param;
 
 
-import com.weibo.weivectorsearch.exception.ParamException;
+//import com.weibo.weivectorsearch.exception.ParamException;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
@@ -319,54 +319,54 @@ public class ConnectParam {
          *
          * @return {@link ConnectParam}
          */
-        public ConnectParam build() throws ParamException {
-            verify();
-
-            return new ConnectParam(this);
-        }
-
-        protected void verify() throws ParamException {
-            ParamUtils.CheckNullEmptyString(host, "Host name");
-            if (StringUtils.isNotEmpty(uri)) {
-                io.milvus.utils.URLParser result = new io.milvus.utils.URLParser(uri);
-                this.secure = result.isSecure();
-                this.host = result.getHostname();
-                this.port = result.getPort();
-                this.databaseName = result.getDatabase();
-            }
-
-            if (StringUtils.isNotEmpty(token)) {
-                this.authorization = Base64.getEncoder().encodeToString(String.format("%s", token).getBytes(StandardCharsets.UTF_8));
-                if (!token.contains(":")) {
-                    this.port = 443;
-                }
-                this.secure = true; //
-            }
-
-            if (port < 0 || port > 0xFFFF) {
-                throw new ParamException("Port is out of range!");
-            }
-
-            if (keepAliveTimeMs <= 0L) {
-                throw new ParamException("Keep alive time must be positive!");
-            }
-
-            if (connectTimeoutMs <= 0L) {
-                throw new ParamException("Connect timeout must be positive!");
-            }
-
-            if (keepAliveTimeoutMs <= 0L) {
-                throw new ParamException("Keep alive timeout must be positive!");
-            }
-
-            if (idleTimeoutMs <= 0L) {
-                throw new ParamException("Idle timeout must be positive!");
-            }
-
-            if (StringUtils.isNotEmpty(serverPemPath) || StringUtils.isNotEmpty(caPemPath)
-                    || StringUtils.isNotEmpty(clientPemPath) || StringUtils.isNotEmpty(clientKeyPath)) {
-                secure = true;
-            }
-        }
+//        public ConnectParam build() throws ParamException {
+//            verify();
+//
+//            return new ConnectParam(this);
+//        }
+//
+//        protected void verify() throws ParamException {
+//            ParamUtils.CheckNullEmptyString(host, "Host name");
+//            if (StringUtils.isNotEmpty(uri)) {
+//                io.milvus.utils.URLParser result = new io.milvus.utils.URLParser(uri);
+//                this.secure = result.isSecure();
+//                this.host = result.getHostname();
+//                this.port = result.getPort();
+//                this.databaseName = result.getDatabase();
+//            }
+//
+//            if (StringUtils.isNotEmpty(token)) {
+//                this.authorization = Base64.getEncoder().encodeToString(String.format("%s", token).getBytes(StandardCharsets.UTF_8));
+//                if (!token.contains(":")) {
+//                    this.port = 443;
+//                }
+//                this.secure = true; //
+//            }
+//
+//            if (port < 0 || port > 0xFFFF) {
+//                throw new ParamException("Port is out of range!");
+//            }
+//
+//            if (keepAliveTimeMs <= 0L) {
+//                throw new ParamException("Keep alive time must be positive!");
+//            }
+//
+//            if (connectTimeoutMs <= 0L) {
+//                throw new ParamException("Connect timeout must be positive!");
+//            }
+//
+//            if (keepAliveTimeoutMs <= 0L) {
+//                throw new ParamException("Keep alive timeout must be positive!");
+//            }
+//
+//            if (idleTimeoutMs <= 0L) {
+//                throw new ParamException("Idle timeout must be positive!");
+//            }
+//
+//            if (StringUtils.isNotEmpty(serverPemPath) || StringUtils.isNotEmpty(caPemPath)
+//                    || StringUtils.isNotEmpty(clientPemPath) || StringUtils.isNotEmpty(clientKeyPath)) {
+//                secure = true;
+//            }
+//        }
     }
 }

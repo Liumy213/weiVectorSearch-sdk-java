@@ -17,15 +17,33 @@
  * under the License.
  */
 
-package com.weibo.weivectorsearch.exception;
-
-import com.weibo.weivectorsearch.param.R;
+package com.weibo.weivectorsearch.param;
 
 /**
- * Exception for illegal parameters input.
+ * Utility class to wrap a message.
  */
-public class ParamException extends VectorSearchException {
-    public ParamException(String msg) {
-        super(msg, R.Status.ParamError.getCode());
+public class RpcStatus {
+    public static final String SUCCESS_MSG = "Success";
+
+    private final String msg;
+
+    public String getMsg() {
+        return msg;
+    }
+
+    public RpcStatus(String msg) {
+        this.msg = msg;
+    }
+
+    /**
+     * Constructs a <code>String</code> by {@link RpcStatus} instance.
+     *
+     * @return <code>String</code>
+     */
+    @Override
+    public String toString() {
+        return "RpcStatus{" +
+                "msg='" + getMsg() + '\'' +
+                '}';
     }
 }

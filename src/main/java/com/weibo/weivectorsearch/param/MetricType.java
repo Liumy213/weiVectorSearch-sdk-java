@@ -17,15 +17,21 @@
  * under the License.
  */
 
-package com.weibo.weivectorsearch.exception;
-
-import com.weibo.weivectorsearch.param.R;
+package com.weibo.weivectorsearch.param;
 
 /**
- * Exception for illegal parameters input.
+ * Represents the available metric types.
+ * For more information: @see <a href="https://milvus.io/docs/v2.0.0/metric.md">Similarity Metrics</a>
  */
-public class ParamException extends VectorSearchException {
-    public ParamException(String msg) {
-        super(msg, R.Status.ParamError.getCode());
-    }
+public enum MetricType {
+    INVALID,
+    // Only for float vectors
+    L2,
+    IP,
+    COSINE,
+
+    // Only for binary vectors
+    HAMMING,
+    JACCARD,
+    ;
 }

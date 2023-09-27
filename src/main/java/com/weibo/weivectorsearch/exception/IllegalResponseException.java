@@ -17,15 +17,17 @@
  * under the License.
  */
 
+
 package com.weibo.weivectorsearch.exception;
 
 import com.weibo.weivectorsearch.param.R;
 
 /**
- * Exception for illegal parameters input.
+ * Interfaces including <code>search</code>/<code>search</code>/<code>loadCollection</code> might 
+ * throw this exception when server return illegal response. It may indicate a bug in server.
  */
-public class ParamException extends VectorSearchException {
-    public ParamException(String msg) {
-        super(msg, R.Status.ParamError.getCode());
+public class IllegalResponseException extends VectorSearchException {
+    public IllegalResponseException(String msg) {
+        super(msg, R.Status.IllegalResponse.getCode());
     }
 }

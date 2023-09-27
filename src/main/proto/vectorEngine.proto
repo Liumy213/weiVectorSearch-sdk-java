@@ -5,13 +5,73 @@ option java_multiple_files = true;
 option java_package = "com.weibo.weivectorsearch.rpc";
 option java_outer_classname = "VectorProto";
 
+import "common.proto";
+
+service VectorSearchService {
+  rpc hello_word(HelloWordRequest) returns (HelloWordResponse) {}
+  rpc has_collection(HasCollectionRequest) returns (BoolResponse) {}
+  rpc create_collection(CreateCollectionRequest) returns (Status) {}
+  rpc drop_collection(DropCollectionRequest) returns (Status) {}
+  rpc load_collection(LoadCollectionRequest) returns (Status) {}
+  rpc release_collection(ReleaseCollectionRequest) returns (Status) {}
+  rpc show_collections(ShowCollectionsRequest) returns (ShowCollectionsResponse) {}
+  rpc describe_collection(DescribeCollectionRequest) returns (DescribeCollectionResponse) {}
+
+  rpc create_partition(CreatePartitionRequest) returns (Status) {}
+  rpc drop_partition(DropPartitionRequest) returns (Status) {}
+  rpc has_partition(HasPartitionRequest) returns (BoolResponse) {}
+  rpc load_partitions(LoadPartitionsRequest) returns (Status) {}
+  rpc release_partitions(ReleasePartitionsRequest) returns (Status) {}
+  rpc show_partitions(ShowPartitionsRequest) returns (ShowPartitionsResponse) {}
+
+  rpc create_index(CreateIndexRequest) returns (Status) {}
+  rpc describe_index(DescribeIndexRequest) returns (DescribeIndexResponse) {}
+  rpc get_index_statistics(GetIndexStatisticsRequest) returns (GetIndexStatisticsResponse) {}
+  // Deprecated: use DescribeIndex instead
+  rpc get_index_state(GetIndexStateRequest) returns (GetIndexStateResponse) {}
+  // Deprecated: use DescribeIndex instead
+  rpc get_index_build_progress(GetIndexBuildProgressRequest) returns (GetIndexBuildProgressResponse) {}
+  rpc drop_index(DropIndexRequest) returns (Status) {}
+
+  rpc Insert(InsertRequest) returns (MutationResult) {}
+  rpc Delete(DeleteRequest) returns (MutationResult) {}
+  rpc Search(SearchRequest) returns (SearchResults) {}
+  rpc Flush(FlushRequest) returns (FlushResponse) {}
+  rpc Query(QueryRequest) returns (QueryResults) {}
+
+  rpc GetFlushState(GetFlushStateRequest) returns (GetFlushStateResponse) {}
+}
+
+message HelloWordRequest {
+  string data = 1;
+}
+
+message HelloWordResponse {
+  bool response = 1;
+}
+
+message HasCollectionRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  string db_name = 2;
+  // The collection name you want to check.
+  string collection_name = 3;
+  // If time_stamp is not zero, will return true when time_stamp >= created collection timestamp, otherwise will return false.
+  uint64 time_stamp = 4;
+}
+
+message BoolResponse {
+  Status status = 1;
+  bool value = 2;
+}
+
 /**
-* Create collection in milvus
+* Create collection
 */
 message CreateCollectionRequest {
   // The unique collection name in milvus.(Required)
   string collection_name = 1;
-  // The serialized `schema.CollectionSchema`(Required)
+  // The serialized `CollectionSchema`(Required)
   CollectionSchema schema = 2;
   // Once set, no modification is allowed (Optional)
   // https://github.com/milvus-io/milvus/issues/6690
@@ -30,6 +90,542 @@ message CollectionSchema {
   string description = 2;
   bool autoID = 3; // deprecated later, keep compatible with c++ part now
   repeated FieldSchema fields = 4;
+}
+
+message DropCollectionRequest {
+  MsgBase base = 1;
+  // The unique collection name.(Required)
+  string collection_name = 2;
+}
+
+message LoadCollectionRequest {
+  MsgBase base = 1;
+  // The collection name you want to load
+  string collection_name = 2;
+}
+
+message ReleaseCollectionRequest {
+  MsgBase base = 1;
+  // The collection name you want to release
+  string collection_name = 2;
+}
+
+message ShowCollectionsRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  // Not useful for now
+  uint64 time_stamp = 3;
+  // Decide return Loaded collections or All collections(Optional)
+  ShowType type = 4;
+  // When type is InMemory, will return these collection's inMemory_percentages.(Optional)
+  // Deprecated: use GetLoadingProgress rpc instead
+  repeated string collection_names = 5;
+}
+
+enum ShowType {
+  // Will return all collections
+  All = 0;
+  // Will return loaded collections with their inMemory_percentages
+  InMemory = 1;
+}
+
+message ShowCollectionsResponse {
+  // Contain error_code and reason
+  Status status = 1;
+  // Collection name array
+  repeated string collection_names = 2;
+  // Collection Id array
+  repeated int64 collection_ids = 3;
+  // Hybrid timestamps in milvus
+  repeated uint64 created_timestamps = 4;
+  // The utc timestamp calculated by created_timestamp
+  repeated uint64 created_utc_timestamps = 5;
+  // Load percentage on querynode when type is InMemory
+  // Deprecated: use GetLoadingProgress rpc instead
+  repeated int64 inMemory_percentages = 6;
+  // Indicate whether query service is available
+  repeated bool query_service_available = 7;
+}
+
+message DescribeCollectionRequest {
+  MsgBase base = 1;
+  // The collection name you want to describe, you can pass collection_name or collectionID
+  string collection_name = 2;
+  // The collection ID you want to describe
+  int64 collectionID = 3;
+  // If time_stamp is not zero, will describe collection success when time_stamp >= created collection timestamp, otherwise will throw error.
+  uint64 time_stamp = 4;
+}
+
+/**
+* DescribeCollection Response
+*/
+message DescribeCollectionResponse {
+  // Contain error_code and reason
+  Status status = 1;
+  // The schema param when you created collection.
+  CollectionSchema schema = 2;
+  // The collection id
+  int64 collectionID = 3;
+  // System design related, users should not perceive
+  repeated string virtual_channel_names = 4;
+  // System design related, users should not perceive
+  repeated string physical_channel_names = 5;
+  // Hybrid timestamp in milvus
+  uint64 created_timestamp = 6;
+  // The utc timestamp calculated by created_timestamp
+  uint64 created_utc_timestamp = 7;
+  // The shards number you set.
+  int32 shards_num = 8;
+  // The aliases of this collection
+  repeated string aliases = 9;
+  // The message ID/posititon when collection is created
+  repeated KeyDataPair start_positions = 10;
+  // The consistency level that the collection used, modification is not supported now.
+  ConsistencyLevel consistency_level = 11;
+  // The collection name
+  string collection_name = 12;
+  repeated KeyValuePair properties = 13;
+  string db_name = 14;
+  int64 num_partitions = 15;
+}
+
+message KeyDataPair {
+  string key = 1;
+  bytes data = 2;
+}
+
+message CreatePartitionRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The partition name you want to create.
+  string partition_name = 3;
+}
+
+/*
+* Drop partition in created collection.
+*/
+message DropPartitionRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The partition name you want to drop
+  string partition_name = 3;
+}
+
+/*
+* Check if partition exist in collection or not.
+*/
+message HasPartitionRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The partition name you want to check
+  string partition_name = 3;
+}
+
+/*
+* Load specific partitions data of one collection into query nodes
+* Then you can get these data as result when you do vector search on this collection.
+*/
+message LoadPartitionsRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The partition names you want to load
+  repeated string partition_names = 3;
+  // The replicas number you would load, 1 by default
+  int32 replica_number = 4;
+  // create replica used resource group
+  repeated string resource_groups = 5;
+  // Whether to enable refresh mode.
+  bool refresh = 6;
+}
+
+/*
+* Release specific partitions data of one collection from query nodes.
+* Then you can not get these data as result when you do vector search on this collection.
+*/
+message ReleasePartitionsRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The partition names you want to release
+  repeated string partition_names = 3;
+}
+
+message ShowPartitionsRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  string db_name = 2;
+  // The collection name you want to describe, you can pass collection_name or collectionID
+  string collection_name = 3;
+  // The collection id in milvus
+  int64 collectionID = 4;
+  // When type is InMemory, will return these patitions's inMemory_percentages.(Optional)
+  repeated string partition_names = 5;
+  // Decide return Loaded partitions or All partitions(Optional)
+  // Deprecated: use GetLoadingProgress rpc instead
+  ShowType type = 6;
+}
+
+/*
+* List all partitions for particular collection response.
+* The returned datas are all rows, we can format to columns by therir index.
+*/
+message ShowPartitionsResponse {
+  // Contain error_code and reason
+  Status status = 1;
+  // All partition names for this collection
+  repeated string partition_names = 2;
+  // All partition ids for this collection
+  repeated int64 partitionIDs = 3;
+  // All hybrid timestamps
+  repeated uint64 created_timestamps = 4;
+  // All utc timestamps calculated by created_timestamps
+  repeated uint64 created_utc_timestamps = 5;
+  // Load percentage on querynode
+  // Deprecated: use GetLoadingProgress rpc instead
+  repeated int64 inMemory_percentages = 6;
+}
+
+message CreateIndexRequest {
+  MsgBase base = 1;
+  // The particular collection name you want to create index.
+  string collection_name = 2;
+  // The vector field name in this particular collection
+  string field_name = 3;
+  // Support keys: index_type,metric_type, params. Different index_type may has different params.
+  repeated KeyValuePair extra_params = 4;
+  // Version before 2.0.2 doesn't contain index_name, we use default index name.
+  string index_name = 5;
+}
+
+message DescribeIndexRequest {
+  MsgBase base = 1;
+  // The particular collection name in Milvus
+  string collection_name = 2;
+  // The vector field name in this particular collection
+  string field_name = 3;
+  // No need to set up for now @2021.06.30
+  string index_name = 4;
+  uint64 timestamp = 5;
+}
+
+/*
+* Index informations
+*/
+message IndexDescription {
+  // Index name
+  string index_name = 1;
+  // Index id
+  int64 indexID = 2;
+  // Will return index_type, metric_type, params(like nlist).
+  repeated KeyValuePair params = 3;
+  // The vector field name
+  string field_name = 4;
+  // index build progress
+  int64 indexed_rows = 5;
+  int64 total_rows = 6;
+  // index state
+  IndexState state = 7;
+  string index_state_fail_reason = 8;
+  int64 pending_index_rows = 9;
+}
+
+/*
+* Describe index response
+*/
+message DescribeIndexResponse {
+  // Response status
+  Status status = 1;
+  // All index informations, for now only return tha latest index you created for the collection.
+  repeated IndexDescription index_descriptions = 2;
+}
+
+/*
+*  Get index building progress
+*/
+message GetIndexBuildProgressRequest {
+  // Not useful for now
+  MsgBase base = 1;
+  // The collection name in milvus
+  string collection_name = 2;
+  // The vector field name in this collection
+  string field_name = 3;
+  // Not useful for now
+  string index_name = 4;
+}
+
+message GetIndexBuildProgressResponse {
+  Status status = 1;
+  int64 indexed_rows = 2;
+  int64 total_rows = 3;
+}
+
+message GetIndexStateRequest {
+  MsgBase base = 1; // must
+  string collection_name = 2; // must
+  string field_name = 3;
+  string index_name = 4; // No need to set up for now @2021.06.30
+}
+
+message GetIndexStateResponse {
+  Status status = 1;
+  IndexState state = 2;
+  string fail_reason = 3;
+}
+
+message DropIndexRequest {
+  MsgBase base = 1; // must
+  string collection_name = 2; // must
+  // Deprecated: not be used in the milvus
+  string field_name = 3;
+  string index_name = 4;
+}
+
+message GetIndexStatisticsRequest {
+  MsgBase base = 1;
+  // The particular collection name
+  string collection_name = 2;
+  // The index name in this particular collection
+  string index_name = 3;
+  uint64 timestamp = 4;
+}
+
+message GetIndexStatisticsResponse {
+  // Response status
+  Status status = 1;
+  // All index information.
+  repeated IndexDescription index_descriptions = 2;
+}
+
+enum IndexState {
+  IndexStateNone = 0;
+  Unissued = 1;
+  InProgress = 2;
+  Finished = 3;
+  Failed = 4;
+  Retry = 5;
+}
+
+message InsertRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string partition_name = 4;
+  repeated FieldData fields_data = 5;
+  repeated uint32 hash_keys = 6;
+  uint32 num_rows = 7;
+}
+
+message UpsertRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string partition_name = 4;
+  repeated FieldData fields_data = 5;
+  repeated uint32 hash_keys = 6;
+  uint32 num_rows = 7;
+}
+
+message MutationResult {
+  Status status = 1;
+  IDs IDs = 2; // required for insert, delete, upsert
+  repeated uint32 succ_index = 3; // error indexes indicate
+  repeated uint32 err_index = 4; // error indexes indicate
+  bool acknowledged = 5;
+  int64 insert_cnt = 6;
+  int64 delete_cnt = 7;
+  int64 upsert_cnt = 8;
+  uint64 timestamp = 9;
+}
+
+message DeleteRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string partition_name = 4;
+  string expr = 5;
+  repeated uint32 hash_keys = 6;
+}
+
+
+message SearchRequest {
+  MsgBase base = 1; // must
+  string db_name = 2;
+  string collection_name = 3; // must
+  repeated string partition_names = 4; // must
+  string dsl = 5; // must
+  // serialized `PlaceholderGroup`
+  bytes placeholder_group = 6; // must
+  DslType dsl_type = 7; // must
+  repeated string output_fields = 8;
+  repeated KeyValuePair search_params = 9; // must
+  uint64 travel_timestamp = 10;
+  uint64 guarantee_timestamp = 11; // guarantee_timestamp
+  int64  nq = 12;
+  bool not_return_all_meta = 13;
+  ConsistencyLevel consistency_level = 14;
+  bool use_default_consistency = 15;
+  bool search_by_primary_keys = 16;
+}
+
+enum DslType {
+  Dsl = 0;
+  BoolExprV1 = 1;
+}
+
+message Hits {
+  repeated int64 IDs = 1;
+  repeated bytes row_data = 2;
+  repeated float scores = 3;
+}
+
+message SearchResults {
+  Status status = 1;
+  SearchResultData results = 2;
+  string collection_name = 3;
+}
+
+message SearchResultData {
+  int64 num_queries = 1;
+  int64 top_k = 2;
+  repeated FieldData fields_data = 3;
+  repeated float scores = 4;
+  IDs ids = 5;
+  repeated int64 topks = 6;
+  repeated string output_fields = 7;
+}
+
+message FlushRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  repeated string collection_names = 3;
+}
+
+message FlushResponse{
+  Status status = 1;
+  string db_name = 2;
+  map<string, LongArray> coll_segIDs = 3;
+  map<string, LongArray> flush_coll_segIDs = 4;
+  map<string, int64> coll_seal_times = 5; // physical time for backup tool
+  map<string, uint64> coll_flush_ts = 6; // hybrid ts for geting flush tate
+}
+
+message QueryRequest {
+  MsgBase base = 1;
+  string db_name = 2;
+  string collection_name = 3;
+  string expr = 4;
+  repeated string output_fields = 5;
+  repeated string partition_names = 6;
+  uint64 travel_timestamp = 7;
+  uint64 guarantee_timestamp = 8; // guarantee_timestamp
+  repeated KeyValuePair query_params = 9; // optional
+  bool not_return_all_meta = 10;
+  ConsistencyLevel consistency_level = 11;
+  bool use_default_consistency = 12;
+}
+
+message QueryResults {
+  Status status = 1;
+  repeated FieldData fields_data = 2;
+  string collection_name = 3;
+  repeated string output_fields = 4;
+}
+
+message IDs {
+  oneof id_field {
+    LongArray int_id = 1;
+    StringArray str_id = 2;
+  }
+}
+
+message BoolArray { repeated bool data = 1; }
+
+message IntArray { repeated int32 data = 1; }
+
+message LongArray { repeated int64 data = 1; }
+
+message FloatArray { repeated float data = 1; }
+
+message DoubleArray { repeated double data = 1; }
+
+// For special fields such as bigdecimal, array...
+message BytesArray { repeated bytes data = 1; }
+
+message StringArray { repeated string data = 1; }
+
+message ArrayArray {
+  repeated ScalarField data = 1;
+  DataType element_type = 2;
+}
+
+message JSONArray { repeated bytes data = 1; }
+
+message ValueField {
+  oneof data {
+    bool bool_data = 1;
+    int32 int_data = 2;
+    int64 long_data = 3;
+    float float_data = 4;
+    double double_data = 5;
+    string string_data = 6;
+    bytes bytes_data = 7;
+  }
+}
+
+message FieldData {
+  DataType type = 1;
+  string field_name = 2;
+  oneof field {
+    ScalarField scalars = 3;
+    VectorField vectors = 4;
+  }
+  int64 field_id = 5;
+  bool is_dynamic = 6;
+}
+
+message ScalarField {
+  oneof data {
+    BoolArray bool_data = 1;
+    IntArray int_data = 2;
+    LongArray long_data = 3;
+    FloatArray float_data = 4;
+    DoubleArray double_data = 5;
+    StringArray string_data = 6;
+    BytesArray bytes_data = 7;
+    ArrayArray array_data = 8;
+    JSONArray json_data = 9;
+  }
+}
+
+message VectorField {
+  int64 dim = 1;
+  oneof data {
+    FloatArray float_vector = 2;
+    bytes binary_vector = 3;
+    bytes float16_vector = 4;
+  }
+}
+
+message GetFlushStateRequest {
+  repeated int64 segmentIDs = 1;
+  uint64 flush_ts = 2;
+  string db_name = 3;
+  string collection_name = 4;
+}
+
+message GetFlushStateResponse {
+  Status status = 1;
+  bool flushed = 2;
 }
 
 /**
@@ -57,19 +653,6 @@ enum FieldState {
   FieldCreating = 1;
   FieldDropping = 2;
   FieldDropped = 3;
-}
-
-
-message ValueField {
-  oneof data {
-    bool bool_data = 1;
-    int32 int_data = 2;
-    int64 long_data = 3;
-    float float_data = 4;
-    double double_data = 5;
-    string string_data = 6;
-    bytes bytes_data = 7;
-  }
 }
 
 /**
@@ -184,7 +767,137 @@ enum ErrorCode {
   DDRequestRace = 1000;
 }
 
-service VectorSearchService {
-  rpc CreateCollection(CreateCollectionRequest) returns (Status) {}
+enum MsgType {
+  Undefined = 0;
+  /* DEFINITION REQUESTS: COLLECTION */
+  CreateCollection = 100;
+  DropCollection = 101;
+  HasCollection = 102;
+  DescribeCollection = 103;
+  ShowCollections = 104;
+  GetSystemConfigs = 105;
+  LoadCollection = 106;
+  ReleaseCollection = 107;
+  CreateAlias = 108;
+  DropAlias = 109;
+  AlterAlias = 110;
+  AlterCollection = 111;
+  RenameCollection = 112;
+  DescribeAlias = 113;
+  ListAliases = 114;
 
+  /* DEFINITION REQUESTS: PARTITION */
+  CreatePartition = 200;
+  DropPartition = 201;
+  HasPartition = 202;
+  DescribePartition = 203;
+  ShowPartitions = 204;
+  LoadPartitions = 205;
+  ReleasePartitions = 206;
+
+  /* DEFINE REQUESTS: SEGMENT */
+  ShowSegments = 250;
+  DescribeSegment = 251;
+  LoadSegments = 252;
+  ReleaseSegments = 253;
+  HandoffSegments = 254;
+  LoadBalanceSegments = 255;
+  DescribeSegments = 256;
+  FederListIndexedSegment = 257;
+  FederDescribeSegmentIndexData = 258;
+
+  /* DEFINITION REQUESTS: INDEX */
+  CreateIndex = 300;
+  DescribeIndex = 301;
+  DropIndex = 302;
+  GetIndexStatistics = 303;
+
+  /* MANIPULATION REQUESTS */
+  Insert = 400;
+  Delete = 401;
+  Flush = 402;
+  ResendSegmentStats = 403;
+  Upsert = 404;
+
+  /* QUERY */
+  Search = 500;
+  SearchResult = 501;
+  GetIndexState = 502;
+  GetIndexBuildProgress = 503;
+  GetCollectionStatistics = 504;
+  GetPartitionStatistics = 505;
+  Retrieve = 506;
+  RetrieveResult = 507;
+  WatchDmChannels = 508;
+  RemoveDmChannels = 509;
+  WatchQueryChannels = 510;
+  RemoveQueryChannels = 511;
+  SealedSegmentsChangeInfo = 512;
+  WatchDeltaChannels = 513;
+  GetShardLeaders = 514;
+  GetReplicas = 515;
+  UnsubDmChannel = 516;
+  GetDistribution = 517;
+  SyncDistribution = 518;
+
+  /* DATA SERVICE */
+  SegmentInfo = 600;
+  SystemInfo = 601;
+  GetRecoveryInfo = 602;
+  GetSegmentState = 603;
+
+  /* SYSTEM CONTROL */
+  TimeTick = 1200;
+  QueryNodeStats = 1201; // GOOSE TODO: Remove kQueryNodeStats
+  LoadIndex = 1202;
+  RequestID = 1203;
+  RequestTSO = 1204;
+  AllocateSegment = 1205;
+  SegmentStatistics = 1206;
+  SegmentFlushDone = 1207;
+
+  DataNodeTt = 1208;
+  Connect = 1209;
+  ListClientInfos = 1210;
+  AllocTimestamp = 1211;
+
+  /* Credential */
+  CreateCredential = 1500;
+  GetCredential = 1501;
+  DeleteCredential = 1502;
+  UpdateCredential = 1503;
+  ListCredUsernames = 1504;
+
+  /* RBAC */
+  CreateRole = 1600;
+  DropRole = 1601;
+  OperateUserRole = 1602;
+  SelectRole = 1603;
+  SelectUser = 1604;
+  SelectResource = 1605;
+  OperatePrivilege = 1606;
+  SelectGrant = 1607;
+  RefreshPolicyInfoCache = 1608;
+  ListPolicy = 1609;
+
+  /* Resource group */
+  CreateResourceGroup = 1700;
+  DropResourceGroup = 1701;
+  ListResourceGroups = 1702;
+  DescribeResourceGroup = 1703;
+  TransferNode = 1704;
+  TransferReplica = 1705;
+
+  /* Database group */
+  CreateDatabase = 1801;
+  DropDatabase = 1802;
+  ListDatabases = 1803;
+}
+
+message MsgBase {
+  MsgType msg_type = 1;
+  int64  msgID = 2;
+  uint64 timestamp = 3;
+  int64 sourceID = 4;
+  int64 targetID = 5;
 }

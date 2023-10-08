@@ -3,10 +3,6 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-mvnw
-.mvn
-mvnw.cmd
-
 ### STS ###
 .apt_generated
 .classpath
@@ -35,3 +31,7 @@ build/
 ### VS Code ###
 .vscode/
 /src/test/java/
+/logs/
+/.mvn/
+mvnw
+mvnw.cmd

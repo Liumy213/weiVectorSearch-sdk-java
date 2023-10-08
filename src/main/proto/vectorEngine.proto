@@ -8,7 +8,6 @@ option java_outer_classname = "VectorProto";
 import "common.proto";
 
 service VectorSearchService {
-  rpc hello_word(HelloWordRequest) returns (HelloWordResponse) {}
   rpc has_collection(HasCollectionRequest) returns (BoolResponse) {}
   rpc create_collection(CreateCollectionRequest) returns (Status) {}
   rpc drop_collection(DropCollectionRequest) returns (Status) {}
@@ -40,14 +39,6 @@ service VectorSearchService {
   rpc Query(QueryRequest) returns (QueryResults) {}
 
   rpc GetFlushState(GetFlushStateRequest) returns (GetFlushStateResponse) {}
-}
-
-message HelloWordRequest {
-  string data = 1;
-}
-
-message HelloWordResponse {
-  bool response = 1;
 }
 
 message HasCollectionRequest {
@@ -417,7 +408,6 @@ enum IndexState {
 
 message InsertRequest {
   MsgBase base = 1;
-  string db_name = 2;
   string collection_name = 3;
   string partition_name = 4;
   repeated FieldData fields_data = 5;
@@ -427,7 +417,6 @@ message InsertRequest {
 
 message UpsertRequest {
   MsgBase base = 1;
-  string db_name = 2;
   string collection_name = 3;
   string partition_name = 4;
   repeated FieldData fields_data = 5;
@@ -449,22 +438,21 @@ message MutationResult {
 
 message DeleteRequest {
   MsgBase base = 1;
-  string db_name = 2;
-  string collection_name = 3;
-  string partition_name = 4;
-  string expr = 5;
-  repeated uint32 hash_keys = 6;
+  string collection_name = 2;
+  string partition_name = 3;
+  string expr = 4;
+  repeated uint32 hash_keys = 5;
 }
 
 
 message SearchRequest {
   MsgBase base = 1; // must
-  string db_name = 2;
-  string collection_name = 3; // must
-  repeated string partition_names = 4; // must
-  string dsl = 5; // must
+  string collection_name = 2; // must
+  repeated string partition_names = 3; // must
+  string dsl = 4; // must
   // serialized `PlaceholderGroup`
-  bytes placeholder_group = 6; // must
+  bytes placeholder_group = 5; // must
+  repeated string texts = 6;
   DslType dsl_type = 7; // must
   repeated string output_fields = 8;
   repeated KeyValuePair search_params = 9; // must
@@ -506,32 +494,29 @@ message SearchResultData {
 
 message FlushRequest {
   MsgBase base = 1;
-  string db_name = 2;
-  repeated string collection_names = 3;
+  repeated string collection_names = 2;
 }
 
 message FlushResponse{
   Status status = 1;
-  string db_name = 2;
-  map<string, LongArray> coll_segIDs = 3;
-  map<string, LongArray> flush_coll_segIDs = 4;
-  map<string, int64> coll_seal_times = 5; // physical time for backup tool
-  map<string, uint64> coll_flush_ts = 6; // hybrid ts for geting flush tate
+  map<string, LongArray> coll_segIDs = 2;
+  map<string, LongArray> flush_coll_segIDs = 3;
+  map<string, int64> coll_seal_times = 4; // physical time for backup tool
+  map<string, uint64> coll_flush_ts = 5; // hybrid ts for geting flush tate
 }
 
 message QueryRequest {
   MsgBase base = 1;
-  string db_name = 2;
-  string collection_name = 3;
-  string expr = 4;
-  repeated string output_fields = 5;
-  repeated string partition_names = 6;
-  uint64 travel_timestamp = 7;
-  uint64 guarantee_timestamp = 8; // guarantee_timestamp
-  repeated KeyValuePair query_params = 9; // optional
-  bool not_return_all_meta = 10;
-  ConsistencyLevel consistency_level = 11;
-  bool use_default_consistency = 12;
+  string collection_name = 2;
+  string expr = 3;
+  repeated string output_fields = 4;
+  repeated string partition_names = 5;
+  uint64 travel_timestamp = 6;
+  uint64 guarantee_timestamp = 7; // guarantee_timestamp
+  repeated KeyValuePair query_params = 8; // optional
+  bool not_return_all_meta = 9;
+  ConsistencyLevel consistency_level = 10;
+  bool use_default_consistency = 11;
 }
 
 message QueryResults {
@@ -646,6 +631,7 @@ message FieldSchema {
   ValueField default_value = 11; // default_value only support scalars except array and json for now
   bool is_dynamic = 12; // mark whether this field is the dynamic field
   bool is_partition_key = 13; // enable logic partitions
+  ModelType model_type = 14;
 }
 
 enum FieldState {
@@ -677,6 +663,13 @@ enum DataType {
   BinaryVector = 100;
   FloatVector = 101;
   Float16Vector = 102;
+}
+
+/**
+ * @brief text to vector model type
+ */
+enum ModelType {
+  SIMCSE = 0;
 }
 
 enum ConsistencyLevel {

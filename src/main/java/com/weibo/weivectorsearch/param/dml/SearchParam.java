@@ -27,6 +27,7 @@ import com.weibo.weivectorsearch.param.MetricType;
 import com.weibo.weivectorsearch.param.ParamUtils;
 import lombok.Getter;
 import lombok.NonNull;
+import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -40,10 +41,12 @@ public class SearchParam {
     private final List<String> partitionNames;
     private final String metricType;
     private final String vectorFieldName;
+    private final String textFieldName;
     private final int topK;
     private final String expr;
     private final List<String> outFields;
     private final List<?> vectors;
+    private final List<String> texts;
     private final Long NQ;
     private final int roundDecimal;
     private final String params;
@@ -58,10 +61,12 @@ public class SearchParam {
         this.partitionNames = builder.partitionNames;
         this.metricType = builder.metricType.name();
         this.vectorFieldName = builder.vectorFieldName;
+        this.textFieldName = builder.textFieldName;
         this.topK = builder.topK;
         this.expr = builder.expr;
         this.outFields = builder.outFields;
         this.vectors = builder.vectors;
+        this.texts = builder.texts;
         this.NQ = builder.NQ;
         this.roundDecimal = builder.roundDecimal;
         this.params = builder.params;
@@ -84,10 +89,12 @@ public class SearchParam {
         private final List<String> partitionNames = Lists.newArrayList();
         private MetricType metricType = MetricType.L2;
         private String vectorFieldName;
+        private String textFieldName;
         private Integer topK;
         private String expr = "";
         private final List<String> outFields = Lists.newArrayList();
         private List<?> vectors;
+        private List<String> texts;
         private Long NQ;
         private Integer roundDecimal = -1;
         private String params = "{}";
@@ -169,6 +176,14 @@ public class SearchParam {
         }
 
         /**
+         * Sets target text field by name. Field name cannot be empty or null.
+         */
+        public Builder withTextFieldName(@NonNull String textFieldName) {
+            this.textFieldName = textFieldName;
+            return this;
+        }
+
+        /**
          * Sets topK value of ANN search.
          *
          * @param topK topK value
@@ -230,6 +245,19 @@ public class SearchParam {
         }
 
         /**
+         * Sets the target texts.
+         *
+         * @param texts list of target texts:
+         *                if text type is String, texts is List of String;
+         * @return <code>Builder</code>
+         */
+        public Builder withTexts(@NonNull List<String> texts) {
+            this.texts = texts;
+            this.NQ = (long) texts.size();
+            return this;
+        }
+
+        /**
          * Specifies the decimal place of the returned results.
          *
          * @param decimal how many digits after the decimal point
@@ -273,7 +301,12 @@ public class SearchParam {
          */
         public SearchParam build() throws ParamException {
             ParamUtils.CheckNullEmptyString(collectionName, "Collection name");
-            ParamUtils.CheckNullEmptyString(vectorFieldName, "Target field name");
+            if ((vectorFieldName == null || StringUtils.isBlank(vectorFieldName))
+                    && (textFieldName == null || StringUtils.isBlank(textFieldName))) {
+                throw new ParamException("Target field name cannot be null or empty, vectorField or textField chose one");
+            } else if (vectorFieldName != null && textFieldName != null) {
+                throw new ParamException("The target field name cannot be searched at the same time, vectorField or textField chose one");
+            }
 
             if (topK <= 0) {
                 throw new ParamException("TopK value is illegal");
@@ -291,46 +324,54 @@ public class SearchParam {
                 throw new ParamException("Metric type is invalid");
             }
 
-            if (vectors == null || vectors.isEmpty()) {
-                throw new ParamException("Target vectors can not be empty");
+            if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
+                if (vectors == null || vectors.isEmpty()) {
+                    throw new ParamException("Target vectors can not be empty");
+                }
+
+                if (vectors.get(0) instanceof List) {
+                    // float vectors
+                    List<?> first = (List<?>) vectors.get(0);
+                    if (!(first.get(0) instanceof Float)) {
+                        throw new ParamException("Float vector field's value must be Lst<Float>");
+                    }
+
+                    int dim = first.size();
+                    for (int i = 1; i < vectors.size(); ++i) {
+                        List<?> temp = (List<?>) vectors.get(i);
+                        if (dim != temp.size()) {
+                            throw new ParamException("Target vector dimension must be equal");
+                        }
+                    }
+
+                    // check metric type
+                    if (!ParamUtils.IsFloatMetric(metricType)) {
+                        throw new ParamException("Target vector is float but metric type is incorrect");
+                    }
+                } else if (vectors.get(0) instanceof ByteBuffer) {
+                    // binary vectors
+                    ByteBuffer first = (ByteBuffer) vectors.get(0);
+                    int dim = first.position();
+                    for (int i = 1; i < vectors.size(); ++i) {
+                        ByteBuffer temp = (ByteBuffer) vectors.get(i);
+                        if (dim != temp.position()) {
+                            throw new ParamException("Target vector dimension must be equal");
+                        }
+                    }
+
+                    // check metric type
+                    if (!ParamUtils.IsBinaryMetric(metricType)) {
+                        throw new ParamException("Target vector is binary but metric type is incorrect");
+                    }
+                } else {
+                    throw new ParamException("Target vector type must be List<Float> or ByteBuffer");
+                }
             }
 
-            if (vectors.get(0) instanceof List) {
-                // float vectors
-                List<?> first = (List<?>) vectors.get(0);
-                if (!(first.get(0) instanceof Float)) {
-                    throw new ParamException("Float vector field's value must be Lst<Float>");
+            if (textFieldName != null && !StringUtils.isBlank(textFieldName)) {
+                if (texts == null || texts.isEmpty()) {
+                    throw new ParamException("Target texts can not be empty");
                 }
-
-                int dim = first.size();
-                for (int i = 1; i < vectors.size(); ++i) {
-                    List<?> temp = (List<?>) vectors.get(i);
-                    if (dim != temp.size()) {
-                        throw new ParamException("Target vector dimension must be equal");
-                    }
-                }
-
-                // check metric type
-                if (!ParamUtils.IsFloatMetric(metricType)) {
-                    throw new ParamException("Target vector is float but metric type is incorrect");
-                }
-            } else if (vectors.get(0) instanceof ByteBuffer) {
-                // binary vectors
-                ByteBuffer first = (ByteBuffer) vectors.get(0);
-                int dim = first.position();
-                for (int i = 1; i < vectors.size(); ++i) {
-                    ByteBuffer temp = (ByteBuffer) vectors.get(i);
-                    if (dim != temp.position()) {
-                        throw new ParamException("Target vector dimension must be equal");
-                    }
-                }
-
-                // check metric type
-                if (!ParamUtils.IsBinaryMetric(metricType)) {
-                    throw new ParamException("Target vector is binary but metric type is incorrect");
-                }
-            } else {
-                throw new ParamException("Target vector type must be List<Float> or ByteBuffer");
             }
 
             return new SearchParam(this);

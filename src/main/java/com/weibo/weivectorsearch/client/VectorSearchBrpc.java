@@ -3,7 +3,6 @@ package com.weibo.weivectorsearch.client;
 import com.weibo.weivectorsearch.rpc.*;
 
 public interface VectorSearchBrpc{
-    HelloWordResponse hello_word(HelloWordRequest helloWordRequest);
     BoolResponse has_collection(HasCollectionRequest hasCollectionRequest);
     Status create_collection(CreateCollectionRequest createCollectionRequest);
     Status drop_collection(DropCollectionRequest dropCollectionRequest);

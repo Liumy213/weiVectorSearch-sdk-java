@@ -38,12 +38,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
     }
 
     @Override
-    public void helloWorld() {
-        HelloWordResponse helloWordResponse = vectorSearchBrpc().hello_word(HelloWordRequest.newBuilder().setData("hello world").build());
-        System.out.println(helloWordResponse.getResponse());
-    }
-
-    @Override
     public R<Boolean> hasCollection(@NonNull HasCollectionParam requestParam) {
         logInfo(requestParam.toString());
 
@@ -1008,9 +1002,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             FlushRequest.Builder builder = FlushRequest.newBuilder()
                     .setBase(msgBase)
                     .addAllCollectionNames(requestParam.getCollectionNames());
-            if (StringUtils.isNotEmpty(requestParam.getDatabaseName())) {
-                builder.setDbName(requestParam.getDatabaseName());
-            }
             FlushRequest flushRequest = builder.build();
             FlushResponse response = vectorSearchBrpc().flush(flushRequest);
 

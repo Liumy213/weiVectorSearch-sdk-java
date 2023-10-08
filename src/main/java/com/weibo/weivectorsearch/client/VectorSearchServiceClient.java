@@ -85,11 +85,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public void helloWorld() {
-        super.helloWorld();
-    }
-
-    @Override
     public R<Boolean> hasCollection(HasCollectionParam hasCollectionParam) {
         return retry(()-> super.hasCollection(hasCollectionParam));
     }

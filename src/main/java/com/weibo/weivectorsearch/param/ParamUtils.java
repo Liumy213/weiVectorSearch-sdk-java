@@ -241,9 +241,6 @@ public class ParamUtils {
                     .setCollectionName(collectionName)
                     .setBase(msgBase)
                     .setNumRows(requestParam.getRowCount());
-            if (StringUtils.isNotEmpty(requestParam.getDatabaseName())) {
-                insertBuilder.setDbName(requestParam.getDatabaseName());
-            }
             fillFieldsData(requestParam, wrapper);
         }
 
@@ -264,9 +261,6 @@ public class ParamUtils {
                     .setCollectionName(collectionName)
                     .setBase(msgBase)
                     .setNumRows(requestParam.getRowCount());
-            if (StringUtils.isNotEmpty(requestParam.getDatabaseName())) {
-                insertBuilder.setDbName(requestParam.getDatabaseName());
-            }
             fillFieldsData(requestParam, wrapper);
         }
 
@@ -398,7 +392,6 @@ public class ParamUtils {
     @SuppressWarnings("unchecked")
     public static SearchRequest convertSearchParam(@NonNull SearchParam requestParam) throws ParamException {
         SearchRequest.Builder builder = SearchRequest.newBuilder()
-                .setDbName("")
                 .setCollectionName(requestParam.getCollectionName());
         if (!requestParam.getPartitionNames().isEmpty()) {
             requestParam.getPartitionNames().forEach(builder::addPartitionNames);
@@ -408,50 +401,67 @@ public class ParamUtils {
         // TODO: check target vector dimension(use DescribeCollection get schema to compare)
         PlaceholderType plType = PlaceholderType.None;
         List<?> vectors = requestParam.getVectors();
-        List<ByteString> byteStrings = new ArrayList<>();
-        for (Object vector : vectors) {
-            if (vector instanceof List) {
-                plType = PlaceholderType.FloatVector;
-                List<Float> list = (List<Float>) vector;
-                ByteBuffer buf = ByteBuffer.allocate(Float.BYTES * list.size());
-                buf.order(ByteOrder.LITTLE_ENDIAN);
-                list.forEach(buf::putFloat);
+        if (vectors != null && vectors.size() > 0) {
+            List<ByteString> byteStrings = new ArrayList<>();
+            for (Object vector : vectors) {
+                if (vector instanceof List) {
+                    plType = PlaceholderType.FloatVector;
+                    List<Float> list = (List<Float>) vector;
+                    ByteBuffer buf = ByteBuffer.allocate(Float.BYTES * list.size());
+                    buf.order(ByteOrder.LITTLE_ENDIAN);
+                    list.forEach(buf::putFloat);
 
-                byte[] array = buf.array();
-                ByteString bs = ByteString.copyFrom(array);
-                byteStrings.add(bs);
-            } else if (vector instanceof ByteBuffer) {
-                plType = PlaceholderType.BinaryVector;
-                ByteBuffer buf = (ByteBuffer) vector;
-                byte[] array = buf.array();
-                ByteString bs = ByteString.copyFrom(array);
-                byteStrings.add(bs);
-            } else {
-                String msg = "Search target vector type is illegal(Only allow List<Float> or ByteBuffer)";
-                throw new ParamException(msg);
+                    byte[] array = buf.array();
+                    ByteString bs = ByteString.copyFrom(array);
+                    byteStrings.add(bs);
+                } else if (vector instanceof ByteBuffer) {
+                    plType = PlaceholderType.BinaryVector;
+                    ByteBuffer buf = (ByteBuffer) vector;
+                    byte[] array = buf.array();
+                    ByteString bs = ByteString.copyFrom(array);
+                    byteStrings.add(bs);
+                } else {
+                    String msg = "Search target vector type is illegal(Only allow List<Float> or ByteBuffer)";
+                    throw new ParamException(msg);
+                }
+            }
+
+            PlaceholderValue.Builder pldBuilder = PlaceholderValue.newBuilder()
+                    .setTag(Constant.VECTOR_TAG)
+                    .setType(plType);
+            byteStrings.forEach(pldBuilder::addValues);
+
+            PlaceholderValue plv = pldBuilder.build();
+            PlaceholderGroup placeholderGroup = PlaceholderGroup.newBuilder()
+                    .addPlaceholders(plv)
+                    .build();
+
+            ByteString byteStr = placeholderGroup.toByteString();
+            builder.setPlaceholderGroup(byteStr);
+        }
+        List<String> texts = requestParam.getTexts();
+        if (texts != null && texts.size() > 0) {
+            for (String text :texts) {
+                builder.addTexts(text);
             }
         }
 
-        PlaceholderValue.Builder pldBuilder = PlaceholderValue.newBuilder()
-                .setTag(Constant.VECTOR_TAG)
-                .setType(plType);
-        byteStrings.forEach(pldBuilder::addValues);
-
-        PlaceholderValue plv = pldBuilder.build();
-        PlaceholderGroup placeholderGroup = PlaceholderGroup.newBuilder()
-                .addPlaceholders(plv)
-                .build();
-
-        ByteString byteStr = placeholderGroup.toByteString();
-        builder.setPlaceholderGroup(byteStr);
         builder.setNq(requestParam.getNQ());
 
+        KeyValuePair keyValuePair = null;
+        if (requestParam.getVectorFieldName() != null) {
+            keyValuePair = KeyValuePair.newBuilder()
+                    .setKey(Constant.VECTOR_FIELD)
+                    .setValue(requestParam.getVectorFieldName())
+                    .build();
+        } else if (requestParam.getTextFieldName() != null) {
+            keyValuePair = KeyValuePair.newBuilder()
+                    .setKey(Constant.TEXT_FIELD)
+                    .setValue(requestParam.getTextFieldName())
+                    .build();
+        }
         // search parameters
-        builder.addSearchParams(
-                KeyValuePair.newBuilder()
-                        .setKey(Constant.VECTOR_FIELD)
-                        .setValue(requestParam.getVectorFieldName())
-                        .build())
+        builder.addSearchParams(keyValuePair)
                 .addSearchParams(
                         KeyValuePair.newBuilder()
                                 .setKey(Constant.TOP_K)
@@ -734,7 +744,8 @@ public class ParamUtils {
                 .setIsPartitionKey(field.isPartitionKey())
                 .setAutoID(field.isAutoID())
                 .setDataType(field.getDataType())
-                .setIsDynamic(field.isDynamic());
+                .setIsDynamic(field.isDynamic())
+                .setModelType(field.getModelType());
 
         // assemble typeParams for CollectionSchema
         List<KeyValuePair> typeParamsList = AssembleKvPair(field.getTypeParams());

@@ -15,8 +15,6 @@ import com.weibo.weivectorsearch.param.partition.*;
 import com.weibo.weivectorsearch.rpc.*;
 
 public interface VectorSearchClient {
-    void helloWorld();
-
     R<Boolean> hasCollection(HasCollectionParam requestParam);
     R<RpcStatus> createCollection(CreateCollectionParam requestParam);
     R<RpcStatus> dropCollection(DropCollectionParam requestParam);

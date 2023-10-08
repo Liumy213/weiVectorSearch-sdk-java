@@ -26,6 +26,7 @@ public class Constant {
     // default value for search key
     public static final String VECTOR_TAG = "$0";
     public static final String VECTOR_FIELD = "anns_field";
+    public static final String TEXT_FIELD = "text_field";
     public static final String VECTOR_DIM = "dim";
     public static final String VARCHAR_MAX_LENGTH = "max_length";
     public static final String TOP_K = "topk";

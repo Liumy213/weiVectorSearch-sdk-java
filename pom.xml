@@ -9,8 +9,8 @@
         <relativePath/> <!-- lookup parent from repository -->
     </parent>
     <groupId>com.weibo</groupId>
-    <artifactId>weiVectorSearch</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
+    <artifactId>weiVectorSearch-sdk-java</artifactId>
+    <version>0.0.1</version>
     <name>weiVectorSearch</name>
     <description>weiVectorSearch</description>
     <properties>

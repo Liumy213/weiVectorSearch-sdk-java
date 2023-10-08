@@ -23,6 +23,7 @@ import com.weibo.weivectorsearch.exception.ParamException;
 import com.weibo.weivectorsearch.param.Constant;
 import com.weibo.weivectorsearch.param.ParamUtils;
 import com.weibo.weivectorsearch.rpc.DataType;
+import com.weibo.weivectorsearch.rpc.ModelType;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -39,6 +40,7 @@ public class FieldType {
     private final boolean primaryKey;
     private final String description;
     private final DataType dataType;
+    private final ModelType modelType;
     private final Map<String,String> typeParams;
     private final boolean autoID;
     private final boolean partitionKey;
@@ -49,6 +51,7 @@ public class FieldType {
         this.primaryKey = builder.primaryKey;
         this.description = builder.description;
         this.dataType = builder.dataType;
+        this.modelType = builder.modelType;
         this.typeParams = builder.typeParams;
         this.autoID = builder.autoID;
         this.partitionKey = builder.partitionKey;
@@ -83,6 +86,7 @@ public class FieldType {
         private boolean primaryKey = false;
         private String description = "";
         private DataType dataType;
+        private ModelType modelType;
         private final Map<String,String> typeParams = new HashMap<>();
         private boolean autoID = false;
         private boolean partitionKey = false;
@@ -138,6 +142,17 @@ public class FieldType {
          */
         public Builder withDataType(@NonNull DataType dataType) {
             this.dataType = dataType;
+            return this;
+        }
+
+        /**
+         * Sets the model type for text to vector.
+         *
+         * @param modelType model type
+         * @return <code>Builder</code>
+         */
+        public Builder withModelType(ModelType modelType) {
+            this.modelType = modelType;
             return this;
         }
 
@@ -225,10 +240,6 @@ public class FieldType {
 
             if (dataType == null || dataType == DataType.None) {
                 throw new ParamException("Field data type is illegal");
-            }
-
-            if (dataType == DataType.String) {
-                throw new ParamException("String type is not supported, use Varchar instead");
             }
 
             if (dataType == DataType.FloatVector || dataType == DataType.BinaryVector) {

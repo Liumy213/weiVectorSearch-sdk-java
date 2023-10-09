@@ -9,6 +9,9 @@ You can use Apache Maven to download the SDK.
 
 ```shell
 <dependency>
+    <groupId>io.github</groupId>
+    <artifactId>weiVectorSearch-sdk-java</artifactId>
+    <version>0.0.1</version>
 </dependency>
 ```
 

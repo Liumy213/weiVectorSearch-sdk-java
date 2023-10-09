@@ -2,7 +2,7 @@ syntax = "proto3";
 package proto.common;
 
 option java_multiple_files = true;
-option java_package = "com.weibo.weivectorsearch.rpc";
+option java_package = "io.github.liumy213.rpc";
 option java_outer_classname = "CommonProto";
 
 enum PlaceholderType {

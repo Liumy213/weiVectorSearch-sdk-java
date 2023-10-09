@@ -7,7 +7,7 @@ Java sdk for weiVectorSearch
 ## Install Java SDK
 You can use Apache Maven to download the SDK.
 
-```shell
+```java
 <dependency>
     <groupId>io.github</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>

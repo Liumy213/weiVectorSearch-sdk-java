@@ -66,8 +66,8 @@ public class FieldType {
     }
 
     public int getMaxLength() {
-        if (typeParams.containsKey(Constant.VARCHAR_MAX_LENGTH)) {
-            return Integer.parseInt(typeParams.get(Constant.VARCHAR_MAX_LENGTH));
+        if (typeParams.containsKey(Constant.MAX_LENGTH)) {
+            return Integer.parseInt(typeParams.get(Constant.MAX_LENGTH));
         }
 
         return 0;
@@ -196,7 +196,7 @@ public class FieldType {
          * @return <code>Builder</code>
          */
         public Builder withMaxLength(@NonNull Integer maxLength) {
-            this.typeParams.put(Constant.VARCHAR_MAX_LENGTH, maxLength.toString());
+            this.typeParams.put(Constant.MAX_LENGTH, maxLength.toString());
             return this;
         }
 
@@ -241,6 +241,19 @@ public class FieldType {
                 throw new ParamException("Field data type is illegal");
             }
 
+            if (dataType == DataType.String) {
+                if (modelType == null) {
+                    modelType = ModelType.SIMCSE;
+                } else if (modelType == ModelType.UNRECOGNIZED) {
+                    modelType = ModelType.SIMCSE;
+                }
+            } else {
+                if (modelType != null) {
+                    throw new ParamException("DataType is not string, modelType is not allowed to be set");
+                }
+                modelType = ModelType.NONE;
+            }
+
             if (dataType == DataType.FloatVector || dataType == DataType.BinaryVector) {
                 if (!typeParams.containsKey(Constant.VECTOR_DIM)) {
                     throw new ParamException("Vector field dimension must be specified");
@@ -257,17 +270,32 @@ public class FieldType {
             }
 
             if (dataType == DataType.VarChar) {
-                if (!typeParams.containsKey(Constant.VARCHAR_MAX_LENGTH)) {
+                if (!typeParams.containsKey(Constant.MAX_LENGTH)) {
                     throw new ParamException("Varchar field max length must be specified");
                 }
 
                 try {
-                    int len = Integer.parseInt(typeParams.get(Constant.VARCHAR_MAX_LENGTH));
+                    int len = Integer.parseInt(typeParams.get(Constant.MAX_LENGTH));
                     if (len <= 0) {
                         throw new ParamException("Varchar field max length must be larger than zero");
                     }
                 } catch (NumberFormatException e) {
                     throw new ParamException("Varchar field max length must be an integer number");
+                }
+            }
+
+            if (dataType == DataType.String) {
+                if (!typeParams.containsKey(Constant.MAX_LENGTH)) {
+                    throw new ParamException("String field max length must be specified");
+                }
+
+                try {
+                    int len = Integer.parseInt(typeParams.get(Constant.MAX_LENGTH));
+                    if (len <= 0) {
+                        throw new ParamException("String field max length must be larger than zero");
+                    }
+                } catch (NumberFormatException e) {
+                    throw new ParamException("String field max length must be an integer number");
                 }
             }
 

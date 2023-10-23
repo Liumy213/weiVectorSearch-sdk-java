@@ -39,9 +39,6 @@ public class CreateCollectionParam {
     private final String description;
     private final List<FieldType> fieldTypes;
     private final int partitionsNum;
-    private final String databaseName;
-
-    private final boolean enableDynamicField;
 
     private CreateCollectionParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
@@ -49,8 +46,6 @@ public class CreateCollectionParam {
         this.description = builder.description;
         this.fieldTypes = builder.fieldTypes;
         this.partitionsNum = builder.partitionsNum;
-        this.databaseName = builder.databaseName;
-        this.enableDynamicField = builder.enableDynamicField;
     }
 
     public static Builder newBuilder() {
@@ -66,9 +61,6 @@ public class CreateCollectionParam {
         private String description = "";
         private final List<FieldType> fieldTypes = new ArrayList<>();
         private int partitionsNum = 0;
-        private String databaseName;
-
-        private boolean enableDynamicField;
         private Builder() {
         }
 
@@ -84,17 +76,6 @@ public class CreateCollectionParam {
         }
 
         /**
-         * Sets the database name. database name can be nil.
-         *
-         * @param databaseName database name
-         * @return <code>Builder</code>
-         */
-        public Builder withDatabaseName(String databaseName) {
-            this.databaseName = databaseName;
-            return this;
-        }
-
-        /**
          * Sets the shards number. The number must be greater or equal to zero.
          * The default value is 0, which means letting the server decide the value.
          * The server set this value to 1 if user didn't specify it.
@@ -104,17 +85,6 @@ public class CreateCollectionParam {
          */
         public Builder withShardsNum(int shardsNum) {
             this.shardsNum = shardsNum;
-            return this;
-        }
-
-        /**
-         * Sets the collection if enableDynamicField.
-         *
-         * @param enableDynamicField enableDynamicField of the collection
-         * @return <code>Builder</code>
-         */
-        public Builder withEnableDynamicField(boolean enableDynamicField) {
-            this.enableDynamicField = enableDynamicField;
             return this;
         }
 

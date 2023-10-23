@@ -28,7 +28,7 @@ public class Constant {
     public static final String VECTOR_FIELD = "anns_field";
     public static final String TEXT_FIELD = "text_field";
     public static final String VECTOR_DIM = "dim";
-    public static final String VARCHAR_MAX_LENGTH = "max_length";
+    public static final String MAX_LENGTH = "max_length";
     public static final String TOP_K = "topk";
     public static final String IGNORE_GROWING = "ignore_growing";
     public static final String INDEX_TYPE = "index_type";

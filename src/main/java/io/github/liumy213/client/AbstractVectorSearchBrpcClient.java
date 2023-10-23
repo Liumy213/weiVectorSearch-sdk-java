@@ -1,8 +1,8 @@
 package io.github.liumy213.client;
 
 import com.baidu.fengchao.stargate.remoting.exceptions.RpcExecutionException;
-import io.github.liumy213.param.*;
-import io.github.liumy213.param.collection.*;
+import io.github.liumy213.exception.IllegalResponseException;
+import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.*;
 import io.github.liumy213.param.collection.*;
 import io.github.liumy213.param.control.GetFlushStateParam;
@@ -10,14 +10,9 @@ import io.github.liumy213.param.dml.DeleteParam;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
-import io.github.liumy213.exception.IllegalResponseException;
-import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.index.*;
-import io.github.liumy213.param.partition.*;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.response.DescCollResponseWrapper;
-import io.github.liumy213.rpc.*;
-import io.github.liumy213.param.index.*;
 import io.github.liumy213.rpc.*;
 import lombok.NonNull;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,9 +44,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         try {
             HasCollectionRequest.Builder builder = HasCollectionRequest.newBuilder()
                     .setCollectionName(requestParam.getCollectionName());
-            if (StringUtils.isNotEmpty(requestParam.getDatabaseName())) {
-                builder.setDbName(requestParam.getDatabaseName());
-            }
             HasCollectionRequest hasCollectionRequest = builder
                     .build();
 

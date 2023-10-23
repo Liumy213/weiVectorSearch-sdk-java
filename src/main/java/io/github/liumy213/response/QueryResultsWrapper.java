@@ -44,7 +44,7 @@ public class QueryResultsWrapper extends RowRecordWrapper {
     /**
      * Gets row records list from query result.
      *
-     * @return <code>List<RowRecord></code> a row records list of the query result
+     * @return a row records list of the query result
      */
     @Override
     public List<RowRecord> getRowRecords() {
@@ -62,6 +62,7 @@ public class QueryResultsWrapper extends RowRecordWrapper {
      * Gets a row record from result.
      *  Throws {@link ParamException} if the index is illegal.
      *
+     * @param index index of build record
      * @return <code>RowRecord</code> a row record of the result
      */
     protected RowRecord buildRowRecord(long index) {

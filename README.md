@@ -11,7 +11,7 @@ You can use Apache Maven to download the SDK.
 <dependency>
     <groupId>io.github.liumy213</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 </dependency>
 ```
 

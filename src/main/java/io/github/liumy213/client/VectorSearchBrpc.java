@@ -23,10 +23,7 @@ public interface VectorSearchBrpc{
     Status drop_index(DropIndexRequest dropIndexRequest);
 
     MutationResult insert_entity(InsertRequest insertRequest);
-    MutationResult delete_entity(DeleteRequest deleteRequest);
     SearchResults search_entity(SearchRequest searchRequest);
-    FlushResponse flush_entity(FlushRequest flushRequest);
     QueryResults query_entity(QueryRequest queryRequest);
-
-    GetFlushStateResponse get_flush_state(GetFlushStateRequest getFlushStateRequest);
+    MutationResult delete_entity(DeleteRequest deleteRequest);
 }

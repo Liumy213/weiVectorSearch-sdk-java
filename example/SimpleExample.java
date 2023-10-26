@@ -32,7 +32,7 @@ public class SimpleExample {
                 .withHost("localhost")
                 .withPort(18880)
                 .build();
-        VectorSearchServiceClient vectorSearchServiceClient = new VectorSearchServiceClient(connectParam);
+        VectorSearchServiceClient client = new VectorSearchServiceClient(connectParam);
 
         // Define fields
         String idFieldName = "id";
@@ -56,37 +56,41 @@ public class SimpleExample {
                 .build();
 
         // Create the collection
-        String collectionName = "collection_name";
+        // vector field and text field can only be selected to create one,
+        // because if the text field is created, the system will generate the
+        // corresponding vector for creation, and cannot create two vector fields at the same time in the engine
+        String collectionName = "collection_example";
         CreateCollectionParam createCollectionParam = CreateCollectionParam.newBuilder()
                 .withCollectionName(collectionName)
                 .addFieldType(idField)
-                .addFieldType(vectorField)
                 .addFieldType(textField)
                 .build();
-        vectorSearchServiceClient.createCollection(createCollectionParam);
+        client.createCollection(createCollectionParam);
 
         // Create the partition
-        String partitionName = "partition_name";
+        String partitionName = "partition_example";
         CreatePartitionParam createPartitionParam = CreatePartitionParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withPartitionName(partitionName)
                 .build();
-        vectorSearchServiceClient.createPartition(createPartitionParam);
+        client.createPartition(createPartitionParam);
 
         // Create an index type on the vector field or text field.
+        String INDEX_PARAM = "{\"nlist\":1024}";
         CreateIndexParam createIndexParam = CreateIndexParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withFieldName(textFieldName)
                 .withIndexType(IndexType.IVF_FLAT)
-                .withMetricType(MetricType.L2)
+                .withMetricType(MetricType.IP)
+                .withExtraParam(INDEX_PARAM)
                 .build();
-        vectorSearchServiceClient.createIndex(createIndexParam);
+        client.createIndex(createIndexParam);
 
         // Call loadCollection() to enable automatically loading data into memory for searching
         LoadCollectionParam loadCollectionParam = LoadCollectionParam.newBuilder()
                 .withCollectionName(collectionName)
                 .build();
-        vectorSearchServiceClient.loadCollection(loadCollectionParam);
+        client.loadCollection(loadCollectionParam);
 
         // Insert 1 text into the collection
         List<Long> idList = new ArrayList<>();
@@ -101,23 +105,7 @@ public class SimpleExample {
                 .withPartitionName(partitionName)
                 .withFields(textFields)
                 .build();
-        vectorSearchServiceClient.insert(textInsertParam);
-
-        // Insert 10 records into the collection
-        List<Float> vectorList = new ArrayList<>();
-        Random rand = new Random();
-        for (int i = 0; i < 300; i++) {
-            vectorList.add(rand.nextFloat());
-        }
-        List<InsertParam.Field> vectorFields = new ArrayList<>();
-        vectorFields.add(new InsertParam.Field(idFieldName, idList));
-        vectorFields.add(new InsertParam.Field(vectorFieldName, vectorList));
-        InsertParam vectorInsertParam = InsertParam.newBuilder()
-                .withCollectionName(collectionName)
-                .withPartitionName(partitionName)
-                .withFields(vectorFields)
-                .build();
-        vectorSearchServiceClient.insert(vectorInsertParam);
+        client.insert(textInsertParam);
 
         // Search data from collection by text
         List<String> searchText = new ArrayList<>();
@@ -128,26 +116,19 @@ public class SimpleExample {
                 .withTopK(10)
                 .withTexts(searchText)
                 .withTextFieldName(textFieldName)
-                .withParams("{}")
                 .addOutField(idFieldName)
                 .build();
-        R<SearchResults> textSearchRet = vectorSearchServiceClient.search(textSearchParam);
-
-        // Search data from collection by vector
-        List<Float> searchVector = new ArrayList<>();
-        for (int i = 0; i < 300; i++) {
-            searchVector.add(rand.nextFloat());
+        R<SearchResults> textSearchRet = client.search(textSearchParam);
+        SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(textSearchRet.getData().getResults());
+        for (int k = 0; k < searchText.size(); k++) {
+            List<?> searchIdList = wrapperSearch.getFieldData(idFieldName, k);
+            List<SearchResultsWrapper.IDScore> scoreList = wrapperSearch.getIDScore(k);
+            int resultSize = searchIdList.size();
+            for (int i = 0; i < resultSize; i++) {
+                System.out.println("id: " + searchIdList.get(i));
+                System.out.println("score: " + scoreList.get(i).getScore());
+            }
         }
-        SearchParam vectorSearchParam = SearchParam.newBuilder()
-                .withCollectionName(collectionName)
-                .withMetricType(MetricType.L2)
-                .withTopK(10)
-                .withVectors(Arrays.asList(searchVector))
-                .withTextFieldName(textFieldName)
-                .withParams("{}")
-                .addOutField(idFieldName)
-                .build();
-        R<SearchResults> vectorSearchRet = vectorSearchServiceClient.search(vectorSearchParam);
 
         // Delete entity
         DeleteParam deleteParam = DeleteParam.newBuilder()
@@ -155,6 +136,27 @@ public class SimpleExample {
                 .withPartitionName(partitionName)
                 .withExpr("id in [1234567890]")
                 .build();
-        vectorSearchServiceClient.delete(deleteParam);
+        client.delete(deleteParam);
+
+        // release collection
+        ReleaseCollectionParam releaseCollectionParam = ReleaseCollectionParam.newBuilder()
+                .withCollectionName(collectionName).build();
+        client.releaseCollection(releaseCollectionParam);
+
+        // drop index
+        DropIndexParam dropIndexParam = DropIndexParam.newBuilder()
+                .withCollectionName(collectionName).build();
+        client.dropIndex(dropIndexParam);
+
+        // drop partition
+        DropPartitionParam dropPartitionParam = DropPartitionParam.newBuilder()
+                .withCollectionName(collectionName)
+                .withPartitionName(partitionName).build();
+        client.dropPartition(dropPartitionParam);
+
+        // droop collection
+        DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()
+                .withCollectionName(collectionName1).build();
+        client.dropCollection(dropCollectionParam);
     }
 }

@@ -3,14 +3,18 @@ package io.github.liumy213.client;
 import com.baidu.fengchao.stargate.remoting.exceptions.RpcExecutionException;
 import io.github.liumy213.exception.IllegalResponseException;
 import io.github.liumy213.exception.ParamException;
-import io.github.liumy213.param.*;
+import io.github.liumy213.param.LogLevel;
+import io.github.liumy213.param.ParamUtils;
+import io.github.liumy213.param.R;
+import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.control.GetFlushStateParam;
 import io.github.liumy213.param.dml.DeleteParam;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
-import io.github.liumy213.param.index.*;
+import io.github.liumy213.param.index.CreateIndexParam;
+import io.github.liumy213.param.index.DescribeIndexParam;
+import io.github.liumy213.param.index.DropIndexParam;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.response.DescCollResponseWrapper;
 import io.github.liumy213.rpc.*;
@@ -20,7 +24,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClient {
@@ -856,98 +863,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         } catch (Exception e) {
             logError("DeleteRequest failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    private void waitForFlush(FlushResponse flushResponse, long waitingInterval, long timeout) {
-        // The rpc api flush() return FlushResponse, but the returned segment ids maybe not yet persisted.
-        // This method use getFlushState() to check segment state.
-        // If all segments state become Flushed, then we say the sync flush action is finished.
-        // If waiting time exceed timeout, exist the circle
-        long tsBegin = System.currentTimeMillis();
-        Map<String, LongArray> collectionSegIDs = flushResponse.getCollSegIDsMap();
-        collectionSegIDs.forEach((collectionName, segmentIDs) -> {
-            while (segmentIDs.getDataCount() > 0) {
-                long tsNow = System.currentTimeMillis();
-                if ((tsNow - tsBegin) >= timeout * 1000) {
-                    logWarning("Waiting flush thread is timeout, flush process may not be finished");
-                    break;
-                }
-
-                GetFlushStateRequest getFlushStateRequest = GetFlushStateRequest.newBuilder()
-                        .addAllSegmentIDs(segmentIDs.getDataList())
-                        .build();
-                GetFlushStateResponse response = vectorSearchBrpc().get_flush_state(getFlushStateRequest);
-                if (response.getFlushed()) {
-                    // if all segment of this collection has been flushed, break this circle and check next collection
-                    String msg = segmentIDs.getDataCount() + " segments of " + collectionName + " has been flushed";
-                    logDebug(msg);
-                    break;
-                }
-
-                try {
-                    String msg = "Waiting flush for " + collectionName + ", interval: " + waitingInterval + "ms";
-                    logDebug(msg);
-                    TimeUnit.MILLISECONDS.sleep(waitingInterval);
-                } catch (InterruptedException e) {
-                    logWarning("Waiting flush thread is interrupted, flush process may not be finished");
-                    break;
-                }
-            }
-        });
-    }
-
-    @Override
-    public R<FlushResponse> flush(@NonNull FlushParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            MsgBase msgBase = MsgBase.newBuilder().setMsgType(MsgType.Flush).build();
-            FlushRequest.Builder builder = FlushRequest.newBuilder()
-                    .setBase(msgBase)
-                    .addAllCollectionNames(requestParam.getCollectionNames());
-            FlushRequest flushRequest = builder.build();
-            FlushResponse response = vectorSearchBrpc().flush_entity(flushRequest);
-
-            if (Objects.equals(requestParam.getSyncFlush(), Boolean.TRUE)) {
-                waitForFlush(response, requestParam.getSyncFlushWaitingInterval(),
-                        requestParam.getSyncFlushWaitingTimeout());
-            }
-
-            logDebug("FlushRequest successfully! Collection names:{}", requestParam.getCollectionNames());
-            return R.success(response);
-        } catch (RpcExecutionException e) {
-            logError("FlushRequest RPC failed! Collection names:{}",
-                    requestParam.getCollectionNames(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("FlushRequest failed! Collection names:{}",
-                    requestParam.getCollectionNames(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<GetFlushStateResponse> getFlushState(@NonNull GetFlushStateParam requestParam) {
-        try {
-            GetFlushStateRequest getFlushStateRequest = GetFlushStateRequest.newBuilder()
-                    .addAllSegmentIDs(requestParam.getSegmentIDs())
-                    .build();
-
-            GetFlushStateResponse response = vectorSearchBrpc().get_flush_state(getFlushStateRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("GetFlushState successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("GetFlushState", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("GetFlushState RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("GetFlushState failed!", e);
             return R.failed(e);
         }
     }

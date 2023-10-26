@@ -1,20 +1,15 @@
 package io.github.liumy213.client;
 
-import io.github.liumy213.param.dml.*;
-import io.github.liumy213.param.FlushParam;
 import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.control.GetFlushStateParam;
 import io.github.liumy213.param.dml.DeleteParam;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
-import io.github.liumy213.param.index.*;
-import io.github.liumy213.param.partition.*;
-import io.github.liumy213.rpc.*;
-import io.github.liumy213.param.index.*;
+import io.github.liumy213.param.index.CreateIndexParam;
+import io.github.liumy213.param.index.DescribeIndexParam;
+import io.github.liumy213.param.index.DropIndexParam;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.rpc.*;
 
@@ -41,8 +36,5 @@ public interface VectorSearchClient {
     R<MutationResult> insert(InsertParam requestParam);
     R<SearchResults> search(SearchParam requestParam);
     R<QueryResults> query(QueryParam requestParam);
-    R<FlushResponse> flush(FlushParam requestParam);
     R<MutationResult> delete(DeleteParam requestParam);
-
-    R<GetFlushStateResponse> getFlushState(GetFlushStateParam requestParam);
 }

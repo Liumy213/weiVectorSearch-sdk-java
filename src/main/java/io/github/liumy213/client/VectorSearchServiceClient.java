@@ -1,20 +1,16 @@
 package io.github.liumy213.client;
 
-import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.control.GetFlushStateParam;
-import io.github.liumy213.param.dml.DeleteParam;
-import io.github.liumy213.param.dml.InsertParam;
-import io.github.liumy213.param.dml.QueryParam;
-import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.ConnectParam;
 import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
+import io.github.liumy213.param.dml.DeleteParam;
+import io.github.liumy213.param.dml.InsertParam;
+import io.github.liumy213.param.dml.QueryParam;
+import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.index.CreateIndexParam;
 import io.github.liumy213.param.index.DescribeIndexParam;
 import io.github.liumy213.param.index.DropIndexParam;
-import io.github.liumy213.param.partition.*;
-import io.github.liumy213.rpc.*;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.rpc.*;
 import lombok.NonNull;
@@ -173,11 +169,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<MutationResult> delete(DeleteParam requestParam) {
-        return retry(()-> super.delete(requestParam));
-    }
-
-    @Override
     public R<SearchResults> search(SearchParam requestParam) {
         return retry(()-> super.search(requestParam));
     }
@@ -188,9 +179,7 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<GetFlushStateResponse> getFlushState(GetFlushStateParam requestParam) {
-        return retry(()-> super.getFlushState(requestParam));
+    public R<MutationResult> delete(DeleteParam requestParam) {
+        return retry(()-> super.delete(requestParam));
     }
-
-
 }

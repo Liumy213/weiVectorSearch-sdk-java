@@ -1,12 +1,12 @@
 package io.github.liumy213.response;
 
 import io.github.liumy213.exception.ParamException;
+import io.github.liumy213.param.ParamUtils;
 import io.github.liumy213.param.collection.FieldType;
 import io.github.liumy213.rpc.CollectionSchema;
 import io.github.liumy213.rpc.DataType;
 import io.github.liumy213.rpc.DescribeCollectionResponse;
 import io.github.liumy213.rpc.FieldSchema;
-import io.github.liumy213.param.ParamUtils;
 import lombok.NonNull;
 
 import java.util.ArrayList;

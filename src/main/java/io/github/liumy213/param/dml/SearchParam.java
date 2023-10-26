@@ -47,12 +47,10 @@ public class SearchParam {
     private final List<?> vectors;
     private final List<String> texts;
     private final Long NQ;
-    private final int roundDecimal;
     private final String params;
     private final long travelTimestamp;
     private final long guaranteeTimestamp;
     private final Long gracefulTime;
-    private final boolean ignoreGrowing;
 
     private SearchParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
@@ -66,12 +64,10 @@ public class SearchParam {
         this.vectors = builder.vectors;
         this.texts = builder.texts;
         this.NQ = builder.NQ;
-        this.roundDecimal = builder.roundDecimal;
         this.params = builder.params;
         this.travelTimestamp = builder.travelTimestamp;
         this.guaranteeTimestamp = builder.guaranteeTimestamp;
         this.gracefulTime = builder.gracefulTime;
-        this.ignoreGrowing = builder.ignoreGrowing;
     }
 
     public static Builder newBuilder() {
@@ -93,7 +89,6 @@ public class SearchParam {
         private List<?> vectors;
         private List<String> texts;
         private Long NQ;
-        private Integer roundDecimal = -1;
         private String params = "{}";
         private Long travelTimestamp = 0L;
         private Long guaranteeTimestamp = Constant.GUARANTEE_EVENTUALLY_TS;
@@ -244,17 +239,6 @@ public class SearchParam {
         }
 
         /**
-         * Specifies the decimal place of the returned results.
-         *
-         * @param decimal how many digits after the decimal point
-         * @return <code>Builder</code>
-         */
-        public Builder withRoundDecimal(@NonNull Integer decimal) {
-            this.roundDecimal = decimal;
-            return this;
-        }
-
-        /**
          * Sets the search parameters specific to the index type.
          *
          * For example: IVF index, the search parameters can be "{\"nprobe\":10}"
@@ -381,7 +365,6 @@ public class SearchParam {
                     ", nq=" + NQ +
                     ", expr='" + expr + '\'' +
                     ", params='" + params + '\'' +
-                    ", ignoreGrowing='" + ignoreGrowing + '\'' +
                     '}';
         } else {
             return "SearchParam{" +
@@ -394,7 +377,6 @@ public class SearchParam {
                     ", nq=" + NQ +
                     ", expr='" + expr + '\'' +
                     ", params='" + params + '\'' +
-                    ", ignoreGrowing='" + ignoreGrowing + '\'' +
                     '}';
         }
     }

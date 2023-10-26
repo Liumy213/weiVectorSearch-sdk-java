@@ -30,10 +30,7 @@ service VectorSearchService {
   rpc insert_entity(InsertRequest) returns (MutationResult) {}
   rpc delete_entity(DeleteRequest) returns (MutationResult) {}
   rpc search_entity(SearchRequest) returns (SearchResults) {}
-  rpc flush_entity(FlushRequest) returns (FlushResponse) {}
   rpc query_entity(QueryRequest) returns (QueryResults) {}
-
-  rpc GetFlushState(GetFlushStateRequest) returns (GetFlushStateResponse) {}
 }
 
 message HasCollectionRequest {
@@ -354,10 +351,6 @@ message SearchRequest {
   uint64 travel_timestamp = 9;
   uint64 guarantee_timestamp = 10; // guarantee_timestamp
   int64  nq = 11;
-  bool not_return_all_meta = 12;
-  ConsistencyLevel consistency_level = 13;
-  bool use_default_consistency = 14;
-  bool search_by_primary_keys = 15;
 }
 
 enum DslType {
@@ -381,31 +374,14 @@ message SearchResultData {
   repeated string output_fields = 7;
 }
 
-message FlushRequest {
-  MsgBase base = 1;
-  repeated string collection_names = 2;
-}
-
-message FlushResponse{
-  Status status = 1;
-  map<string, LongArray> coll_segIDs = 2;
-  map<string, LongArray> flush_coll_segIDs = 3;
-  map<string, int64> coll_seal_times = 4; // physical time for backup tool
-  map<string, uint64> coll_flush_ts = 5; // hybrid ts for geting flush tate
-}
-
 message QueryRequest {
-  MsgBase base = 1;
-  string collection_name = 2;
-  string expr = 3;
-  repeated string output_fields = 4;
-  repeated string partition_names = 5;
-  uint64 travel_timestamp = 6;
-  uint64 guarantee_timestamp = 7; // guarantee_timestamp
-  repeated KeyValuePair query_params = 8; // optional
-  bool not_return_all_meta = 9;
-  ConsistencyLevel consistency_level = 10;
-  bool use_default_consistency = 11;
+  string collection_name = 1;
+  string expr = 2;
+  repeated string output_fields = 3;
+  repeated string partition_names = 4;
+  uint64 travel_timestamp = 5;
+  uint64 guarantee_timestamp = 6; // guarantee_timestamp
+  repeated KeyValuePair query_params = 7; // optional
 }
 
 message QueryResults {
@@ -490,18 +466,6 @@ message VectorField {
   }
 }
 
-message GetFlushStateRequest {
-  repeated int64 segmentIDs = 1;
-  uint64 flush_ts = 2;
-  string db_name = 3;
-  string collection_name = 4;
-}
-
-message GetFlushStateResponse {
-  Status status = 1;
-  bool flushed = 2;
-}
-
 /**
  * @brief Field schema
  */
@@ -560,14 +524,6 @@ enum DataType {
 enum ModelType {
   NONE = 0;
   SIMCSE = 1;
-}
-
-enum ConsistencyLevel {
-  Strong = 0;
-  Session = 1; // default in Pyvector search engine
-  Bounded = 2;
-  Eventually = 3;
-  Customized = 4; // Users pass their own `guarantee_timestamp`.
 }
 
 message KeyValuePair {
@@ -648,139 +604,4 @@ enum ErrorCode {
 
   // internal error code.
   DDRequestRace = 1000;
-}
-
-enum MsgType {
-  Undefined = 0;
-  /* DEFINITION REQUESTS: COLLECTION */
-  CreateCollection = 100;
-  DropCollection = 101;
-  HasCollection = 102;
-  DescribeCollection = 103;
-  ShowCollections = 104;
-  GetSystemConfigs = 105;
-  LoadCollection = 106;
-  ReleaseCollection = 107;
-  CreateAlias = 108;
-  DropAlias = 109;
-  AlterAlias = 110;
-  AlterCollection = 111;
-  RenameCollection = 112;
-  DescribeAlias = 113;
-  ListAliases = 114;
-
-  /* DEFINITION REQUESTS: PARTITION */
-  CreatePartition = 200;
-  DropPartition = 201;
-  HasPartition = 202;
-  DescribePartition = 203;
-  ShowPartitions = 204;
-  LoadPartitions = 205;
-  ReleasePartitions = 206;
-
-  /* DEFINE REQUESTS: SEGMENT */
-  ShowSegments = 250;
-  DescribeSegment = 251;
-  LoadSegments = 252;
-  ReleaseSegments = 253;
-  HandoffSegments = 254;
-  LoadBalanceSegments = 255;
-  DescribeSegments = 256;
-  FederListIndexedSegment = 257;
-  FederDescribeSegmentIndexData = 258;
-
-  /* DEFINITION REQUESTS: INDEX */
-  CreateIndex = 300;
-  DescribeIndex = 301;
-  DropIndex = 302;
-  GetIndexStatistics = 303;
-
-  /* MANIPULATION REQUESTS */
-  Insert = 400;
-  Delete = 401;
-  Flush = 402;
-  ResendSegmentStats = 403;
-  Upsert = 404;
-
-  /* QUERY */
-  Search = 500;
-  SearchResult = 501;
-  GetIndexState = 502;
-  GetIndexBuildProgress = 503;
-  GetCollectionStatistics = 504;
-  GetPartitionStatistics = 505;
-  Retrieve = 506;
-  RetrieveResult = 507;
-  WatchDmChannels = 508;
-  RemoveDmChannels = 509;
-  WatchQueryChannels = 510;
-  RemoveQueryChannels = 511;
-  SealedSegmentsChangeInfo = 512;
-  WatchDeltaChannels = 513;
-  GetShardLeaders = 514;
-  GetReplicas = 515;
-  UnsubDmChannel = 516;
-  GetDistribution = 517;
-  SyncDistribution = 518;
-
-  /* DATA SERVICE */
-  SegmentInfo = 600;
-  SystemInfo = 601;
-  GetRecoveryInfo = 602;
-  GetSegmentState = 603;
-
-  /* SYSTEM CONTROL */
-  TimeTick = 1200;
-  QueryNodeStats = 1201; // GOOSE TODO: Remove kQueryNodeStats
-  LoadIndex = 1202;
-  RequestID = 1203;
-  RequestTSO = 1204;
-  AllocateSegment = 1205;
-  SegmentStatistics = 1206;
-  SegmentFlushDone = 1207;
-
-  DataNodeTt = 1208;
-  Connect = 1209;
-  ListClientInfos = 1210;
-  AllocTimestamp = 1211;
-
-  /* Credential */
-  CreateCredential = 1500;
-  GetCredential = 1501;
-  DeleteCredential = 1502;
-  UpdateCredential = 1503;
-  ListCredUsernames = 1504;
-
-  /* RBAC */
-  CreateRole = 1600;
-  DropRole = 1601;
-  OperateUserRole = 1602;
-  SelectRole = 1603;
-  SelectUser = 1604;
-  SelectResource = 1605;
-  OperatePrivilege = 1606;
-  SelectGrant = 1607;
-  RefreshPolicyInfoCache = 1608;
-  ListPolicy = 1609;
-
-  /* Resource group */
-  CreateResourceGroup = 1700;
-  DropResourceGroup = 1701;
-  ListResourceGroups = 1702;
-  DescribeResourceGroup = 1703;
-  TransferNode = 1704;
-  TransferReplica = 1705;
-
-  /* Database group */
-  CreateDatabase = 1801;
-  DropDatabase = 1802;
-  ListDatabases = 1803;
-}
-
-message MsgBase {
-  MsgType msg_type = 1;
-  int64  msgID = 2;
-  uint64 timestamp = 3;
-  int64 sourceID = 4;
-  int64 targetID = 5;
 }

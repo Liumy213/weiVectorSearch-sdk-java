@@ -469,16 +469,6 @@ public class ParamUtils {
                         KeyValuePair.newBuilder()
                                 .setKey(Constant.METRIC_TYPE)
                                 .setValue(requestParam.getMetricType())
-                                .build())
-                .addSearchParams(
-                        KeyValuePair.newBuilder()
-                                .setKey(Constant.ROUND_DECIMAL)
-                                .setValue(String.valueOf(requestParam.getRoundDecimal()))
-                                .build())
-                .addSearchParams(
-                        KeyValuePair.newBuilder()
-                                .setKey(Constant.IGNORE_GROWING)
-                                .setValue(String.valueOf(requestParam.isIgnoreGrowing()))
                                 .build());
 
         if (null != requestParam.getParams() && !requestParam.getParams().isEmpty()) {

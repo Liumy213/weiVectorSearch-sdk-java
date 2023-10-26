@@ -20,7 +20,6 @@
 package io.github.liumy213.param.dml;
 
 import com.baidu.cloud.thirdparty.google.common.collect.Lists;
-import io.github.liumy213.common.clientenum.ConsistencyLevelEnum;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.Constant;
 import io.github.liumy213.param.MetricType;
@@ -53,7 +52,6 @@ public class SearchParam {
     private final long travelTimestamp;
     private final long guaranteeTimestamp;
     private final Long gracefulTime;
-    private final ConsistencyLevelEnum consistencyLevel;
     private final boolean ignoreGrowing;
 
     private SearchParam(@NonNull Builder builder) {
@@ -73,7 +71,6 @@ public class SearchParam {
         this.travelTimestamp = builder.travelTimestamp;
         this.guaranteeTimestamp = builder.guaranteeTimestamp;
         this.gracefulTime = builder.gracefulTime;
-        this.consistencyLevel = builder.consistencyLevel;
         this.ignoreGrowing = builder.ignoreGrowing;
     }
 
@@ -101,7 +98,6 @@ public class SearchParam {
         private Long travelTimestamp = 0L;
         private Long guaranteeTimestamp = Constant.GUARANTEE_EVENTUALLY_TS;
         private Long gracefulTime = 5000L;
-        private ConsistencyLevelEnum consistencyLevel = null;
         private Boolean ignoreGrowing = Boolean.FALSE;
 
        Builder() {
@@ -126,17 +122,6 @@ public class SearchParam {
          */
         public Builder withPartitionNames(@NonNull List<String> partitionNames) {
             partitionNames.forEach(this::addPartitionName);
-            return this;
-        }
-
-        /**
-         * ConsistencyLevel of consistency level.
-         *
-         * @param consistencyLevel consistency level
-         * @return <code>Builder</code>
-         */
-        public Builder withConsistencyLevel(ConsistencyLevelEnum consistencyLevel) {
-            this.consistencyLevel = consistencyLevel;
             return this;
         }
 
@@ -198,7 +183,6 @@ public class SearchParam {
 
         /**
          * Sets expression to filter out entities before searching (Optional).
-         * @see <a href="https://milvus.io/docs/v2.0.0/boolean.md">Boolean Expression Rules</a>
          *
          * @param expr filtering expression
          * @return <code>Builder</code>
@@ -274,7 +258,6 @@ public class SearchParam {
          * Sets the search parameters specific to the index type.
          *
          * For example: IVF index, the search parameters can be "{\"nprobe\":10}"
-         * For more information: @see <a href="https://milvus.io/docs/v2.0.0/index_selection.md">Index Selection</a>
          *
          * @param params extra parameters in json format
          * @return <code>Builder</code>
@@ -387,18 +370,32 @@ public class SearchParam {
      */
     @Override
     public String toString() {
-        return "SearchParam{" +
-                "collectionName='" + collectionName + '\'' +
-                ", partitionNames='" + partitionNames.toString() + '\'' +
-                ", metricType=" + metricType +
-                ", target vectors count=" + vectors.size() +
-                ", vectorFieldName='" + vectorFieldName + '\'' +
-                ", topK=" + topK +
-                ", nq=" + NQ +
-                ", expr='" + expr + '\'' +
-                ", params='" + params + '\'' +
-                ", consistencyLevel='" + consistencyLevel + '\'' +
-                ", ignoreGrowing='" + ignoreGrowing + '\'' +
-                '}';
+        if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
+            return "SearchParam{" +
+                    "collectionName='" + collectionName + '\'' +
+                    ", partitionNames='" + partitionNames.toString() + '\'' +
+                    ", metricType=" + metricType +
+                    ", target vectors count=" + vectors.size() +
+                    ", vectorFieldName='" + vectorFieldName + '\'' +
+                    ", topK=" + topK +
+                    ", nq=" + NQ +
+                    ", expr='" + expr + '\'' +
+                    ", params='" + params + '\'' +
+                    ", ignoreGrowing='" + ignoreGrowing + '\'' +
+                    '}';
+        } else {
+            return "SearchParam{" +
+                    "collectionName='" + collectionName + '\'' +
+                    ", partitionNames='" + partitionNames.toString() + '\'' +
+                    ", metricType=" + metricType +
+                    ", target text count=" + texts.size() +
+                    ", vectorFieldName='" + textFieldName + '\'' +
+                    ", topK=" + topK +
+                    ", nq=" + NQ +
+                    ", expr='" + expr + '\'' +
+                    ", params='" + params + '\'' +
+                    ", ignoreGrowing='" + ignoreGrowing + '\'' +
+                    '}';
+        }
     }
 }

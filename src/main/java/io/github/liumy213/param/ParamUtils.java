@@ -3,7 +3,6 @@ package io.github.liumy213.param;
 import com.alibaba.fastjson.JSONObject;
 import com.baidu.cloud.thirdparty.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
-import io.github.liumy213.common.clientenum.ConsistencyLevelEnum;
 import io.github.liumy213.common.utils.JacksonUtils;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
@@ -221,10 +220,8 @@ public class ParamUtils {
      * @return boolean type
      */
     public static boolean VerifyIndexType(IndexType indexType, DataType dataType) {
-        if (dataType == DataType.FloatVector) {
-            return (IsVectorIndex(indexType) && (indexType != IndexType.BIN_FLAT) && (indexType != IndexType.BIN_IVF_FLAT));
-        } else if (dataType == DataType.BinaryVector) {
-            return indexType == IndexType.BIN_FLAT || indexType == IndexType.BIN_IVF_FLAT;
+        if (dataType == DataType.FloatVector || dataType == DataType.String) {
+            return (IsVectorIndex(indexType));
         } else if (dataType == DataType.VarChar) {
             return indexType == IndexType.TRIE;
         } else {
@@ -241,10 +238,8 @@ public class ParamUtils {
             String collectionName = requestParam.getCollectionName();
 
             // generate insert request builder
-            MsgBase msgBase = MsgBase.newBuilder().setMsgType(MsgType.Insert).build();
             insertBuilder = InsertRequest.newBuilder()
                     .setCollectionName(collectionName)
-                    .setBase(msgBase)
                     .setNumRows(requestParam.getRowCount());
             fillFieldsData(requestParam, wrapper);
         }
@@ -261,10 +256,8 @@ public class ParamUtils {
             }
 
             // generate upsert request builder
-            MsgBase msgBase = MsgBase.newBuilder().setMsgType(MsgType.Insert).build();
             upsertBuilder = UpsertRequest.newBuilder()
                     .setCollectionName(collectionName)
-                    .setBase(msgBase)
                     .setNumRows(requestParam.getRowCount());
             fillFieldsData(requestParam, wrapper);
         }
@@ -517,38 +510,16 @@ public class ParamUtils {
             builder.setDsl(requestParam.getExpr());
         }
 
-        long guaranteeTimestamp = getGuaranteeTimestamp(requestParam.getConsistencyLevel(),
-                requestParam.getGuaranteeTimestamp(), requestParam.getGracefulTime());
-        builder.setTravelTimestamp(requestParam.getTravelTimestamp());
-        builder.setGuaranteeTimestamp(guaranteeTimestamp);
-
-        // a new parameter from v2.2.9, if user didn't specify consistency level, set this parameter to true
-        if (requestParam.getConsistencyLevel() == null) {
-            builder.setUseDefaultConsistency(true);
-        } else {
-            builder.setConsistencyLevelValue(requestParam.getConsistencyLevel().getCode());
-        }
-
         return builder.build();
     }
 
     public static QueryRequest convertQueryParam(@NonNull QueryParam requestParam) {
-        long guaranteeTimestamp = getGuaranteeTimestamp(requestParam.getConsistencyLevel(),
-                requestParam.getGuaranteeTimestamp(), requestParam.getGracefulTime());
         QueryRequest.Builder builder = QueryRequest.newBuilder()
                 .setCollectionName(requestParam.getCollectionName())
                 .addAllPartitionNames(requestParam.getPartitionNames())
                 .addAllOutputFields(requestParam.getOutFields())
                 .setExpr(requestParam.getExpr())
-                .setTravelTimestamp(requestParam.getTravelTimestamp())
-                .setGuaranteeTimestamp(guaranteeTimestamp);
-
-        // a new parameter from v2.2.9, if user didn't specify consistency level, set this parameter to true
-        if (requestParam.getConsistencyLevel() == null) {
-            builder.setUseDefaultConsistency(true);
-        } else {
-            builder.setConsistencyLevelValue(requestParam.getConsistencyLevel().getCode());
-        }
+                .setTravelTimestamp(requestParam.getTravelTimestamp());
 
         // set offset and limit value.
         // directly pass the two values, the server will verify them.
@@ -576,26 +547,6 @@ public class ParamUtils {
 
         return builder.build();
     }
-
-    private static long getGuaranteeTimestamp(ConsistencyLevelEnum consistencyLevel,
-                                              long guaranteeTimestamp, Long gracefulTime){
-        if(consistencyLevel == null){
-            return 1L;
-        }
-        switch (consistencyLevel){
-            case STRONG:
-                guaranteeTimestamp = 0L;
-                break;
-            case BOUNDED:
-                guaranteeTimestamp = (new Date()).getTime() - gracefulTime;
-                break;
-            case EVENTUALLY:
-                guaranteeTimestamp = 1L;
-                break;
-        }
-        return guaranteeTimestamp;
-    }
-
 
     private static final Set<DataType> vectorDataType = new HashSet<DataType>() {{
         add(DataType.FloatVector);

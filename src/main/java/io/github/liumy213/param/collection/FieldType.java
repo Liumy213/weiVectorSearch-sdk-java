@@ -112,7 +112,7 @@ public class FieldType {
 
         /**
          * Sets the field as the primary key field.
-         * Note that the current release of Milvus only support <code>Long</code> data type as primary key.
+         * Note that the current release of vector search engine only support <code>Long</code> data type as primary key.
          *
          * @param primaryKey true is primary key, false is not
          * @return <code>Builder</code>
@@ -202,7 +202,7 @@ public class FieldType {
 
         /**
          * Enables auto-id function for the field. Note that the auto-id function can only be enabled on primary key field.
-         * If auto-id function is enabled, Milvus will automatically generate unique ID for each entity,
+         * If auto-id function is enabled, vector search engine will automatically generate unique ID for each entity,
          * thus you do not need to provide values for the primary key field when inserting.
          *
          * If auto-id is disabled, you need to provide values for the primary key field when inserting.

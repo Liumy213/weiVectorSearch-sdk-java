@@ -21,6 +21,7 @@ package io.github.liumy213.param.collection;
 
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.ParamUtils;
+import io.github.liumy213.rpc.DataType;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
@@ -154,9 +155,23 @@ public class CreateCollectionParam {
             }
 
             boolean hasPartitionKey = false;
+            boolean hasVectorField = false;
+            boolean hasStringField = false;
             for (FieldType fieldType : fieldTypes) {
                 if (fieldType == null) {
                     throw new ParamException("Collection field cannot be null");
+                }
+
+                if (fieldType.getDataType() == DataType.FloatVector) {
+                    hasVectorField = true;
+                }
+
+                if (fieldType.getDataType() == DataType.String) {
+                    hasStringField = true;
+                }
+
+                if (hasStringField && hasVectorField) {
+                    throw new ParamException("FloatVector and String field can not be same time to create, only one field is allowed in a collection");
                 }
 
                 if (fieldType.isPartitionKey()) {

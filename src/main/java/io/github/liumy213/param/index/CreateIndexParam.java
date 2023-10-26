@@ -39,18 +39,13 @@ import java.util.Objects;
 @Getter
 @ToString
 public class CreateIndexParam {
-    private final String databaseName;
     private final String collectionName;
     private final String fieldName;
     private final String indexName;
     private final IndexType indexType; // for easily get to check with field type
     private final Map<String, String> extraParam = new HashMap<>();
-    private final boolean syncMode;
-    private final long syncWaitingInterval;
-    private final long syncWaitingTimeout;
 
     private CreateIndexParam(@NonNull Builder builder) {
-        this.databaseName = builder.databaseName;
         this.collectionName = builder.collectionName;
         this.fieldName = builder.fieldName;
         this.indexName = builder.indexName;
@@ -64,9 +59,6 @@ public class CreateIndexParam {
         if (builder.extraParam != null) {
             this.extraParam.put(Constant.PARAMS, builder.extraParam);
         }
-        this.syncMode = builder.syncMode;
-        this.syncWaitingInterval = builder.syncWaitingInterval;
-        this.syncWaitingTimeout = builder.syncWaitingTimeout;
     }
 
     public static Builder newBuilder() {
@@ -77,7 +69,6 @@ public class CreateIndexParam {
      * Builder for {@link CreateIndexParam} class.
      */
     public static final class Builder {
-        private String databaseName;
         private String collectionName;
         private String fieldName;
         private IndexType indexType = IndexType.INVALID;
@@ -85,32 +76,7 @@ public class CreateIndexParam {
         private MetricType metricType = MetricType.INVALID;
         private String extraParam;
 
-        // syncMode:
-        //   Default behavior is sync mode, createIndex() return after the index successfully created.
-        private Boolean syncMode = Boolean.TRUE;
-
-        // syncWaitingDuration:
-        //   When syncMode is ture, createIndex() return after the index successfully created.
-        //   this value control the waiting interval. Unit: millisecond. Default value: 500 milliseconds.
-        private Long syncWaitingInterval = 500L;
-
-        // syncWaitingTimeout:
-        //   When syncMode is ture, createIndex() return after the index successfully created.
-        //   this value control the waiting timeout. Unit: second. Default value: 600 seconds.
-        private Long syncWaitingTimeout = 600L;
-
         private Builder() {
-        }
-
-        /**
-         * Sets the database name. database name can be nil.
-         *
-         * @param databaseName database name
-         * @return <code>Builder</code>
-         */
-        public Builder withDatabaseName(String databaseName) {
-            this.databaseName = databaseName;
-            return this;
         }
 
         /**
@@ -173,54 +139,12 @@ public class CreateIndexParam {
          * Sets the specific index parameters according to index type.
          *
          * For example: IVF index, the extra parameters can be "{\"nlist\":1024}".
-         * For more information: @see <a href="https://milvus.io/docs/v2.0.0/index_selection.md">Index Selection</a>
          *
          * @param extraParam extra parameters in .json format
          * @return <code>Builder</code>
          */
         public Builder withExtraParam(@NonNull String extraParam) {
             this.extraParam = extraParam;
-            return this;
-        }
-
-        /**
-         * Enables to sync mode.
-         * With sync mode enabled, the client keeps waiting until all segments of the collection are successfully indexed.
-         *
-         * With sync mode disabled, client returns at once after the createIndex() is called.
-         *
-         * @param syncMode <code>Boolean.TRUE</code> is sync mode, Boolean.FALSE is not
-         * @return <code>Builder</code>
-         */
-        public Builder withSyncMode(@NonNull Boolean syncMode) {
-            this.syncMode = syncMode;
-            return this;
-        }
-
-        /**
-         * Sets the waiting interval in sync mode. With sync mode enabled, the client constantly checks index state by interval.
-         * Interval must be greater than zero, and cannot be greater than Constant.MAX_WAITING_INDEX_INTERVAL.
-         * Default value is 500 milliseconds.
-         * @see Constant
-         *
-         * @param milliseconds interval
-         * @return <code>Builder</code>
-         */
-        public Builder withSyncWaitingInterval(@NonNull Long milliseconds) {
-            this.syncWaitingInterval = milliseconds;
-            return this;
-        }
-
-        /**
-         * Sets the timeout value for sync mode. 
-         * Timeout value must be greater than zero and with No upper limit. Default value is 600 seconds.
-         * @see Constant
-         *
-         * @param seconds time out value for sync mode
-         * @return <code>Builder</code>
-         */
-        public Builder withSyncWaitingTimeout(@NonNull Long seconds) {
-            this.syncWaitingTimeout = seconds;
             return this;
         }
 
@@ -247,20 +171,7 @@ public class CreateIndexParam {
                 }
             }
 
-            if (Objects.equals(syncMode, Boolean.TRUE)) {
-                if (syncWaitingInterval <= 0) {
-                    throw new ParamException("Sync index waiting interval must be larger than zero");
-                } else if (syncWaitingInterval > Constant.MAX_WAITING_INDEX_INTERVAL) {
-                    throw new ParamException("Sync index waiting interval cannot be larger than "
-                            + Constant.MAX_WAITING_INDEX_INTERVAL.toString() + " milliseconds");
-                }
-
-                if (syncWaitingTimeout <= 0) {
-                    throw new ParamException("Sync index waiting timeout must be larger than zero");
-                }
-            }
-
-//            ParamUtils.CheckNullEmptyString(extraParam, "Index extra param");
+            ParamUtils.CheckNullEmptyString(extraParam, "Index extra param");
 
             return new CreateIndexParam(this);
         }

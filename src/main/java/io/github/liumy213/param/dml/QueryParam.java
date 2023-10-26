@@ -20,7 +20,6 @@
 package io.github.liumy213.param.dml;
 
 import com.baidu.cloud.thirdparty.google.common.collect.Lists;
-import io.github.liumy213.common.clientenum.ConsistencyLevelEnum;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.Constant;
 import io.github.liumy213.param.ParamUtils;
@@ -42,7 +41,6 @@ public class QueryParam {
     private final long travelTimestamp;
     private final long guaranteeTimestamp;
     private final long gracefulTime;
-    private final ConsistencyLevelEnum consistencyLevel;
     private final long offset;
     private final long limit;
     private final boolean ignoreGrowing;
@@ -54,7 +52,6 @@ public class QueryParam {
         this.expr = builder.expr;
         this.travelTimestamp = builder.travelTimestamp;
         this.guaranteeTimestamp = builder.guaranteeTimestamp;
-        this.consistencyLevel = builder.consistencyLevel;
         this.gracefulTime = builder.gracefulTime;
         this.offset = builder.offset;
         this.limit = builder.limit;
@@ -76,7 +73,6 @@ public class QueryParam {
         private Long travelTimestamp = 0L;
         private Long gracefulTime = 5000L;
         private Long guaranteeTimestamp = Constant.GUARANTEE_EVENTUALLY_TS;
-        private ConsistencyLevelEnum consistencyLevel = null;
         private Long offset = 0L;
         private Long limit = 0L;
         private Boolean ignoreGrowing = Boolean.FALSE;
@@ -92,17 +88,6 @@ public class QueryParam {
          */
         public Builder withCollectionName(@NonNull String collectionName) {
             this.collectionName = collectionName;
-            return this;
-        }
-
-        /**
-         * ConsistencyLevel of consistency level.
-         *
-         * @param consistencyLevel consistency level
-         * @return <code>Builder</code>
-         */
-        public Builder withConsistencyLevel(ConsistencyLevelEnum consistencyLevel) {
-            this.consistencyLevel = consistencyLevel;
             return this;
         }
 
@@ -156,7 +141,6 @@ public class QueryParam {
 
         /**
          * Sets the expression to query entities.
-         * @see <a href="https://milvus.io/docs/v2.0.0/boolean.md">Boolean Expression Rules</a>
          *
          * @param expr filtering expression
          * @return <code>Builder</code>
@@ -243,7 +227,6 @@ public class QueryParam {
                 ", partitionNames='" + partitionNames.toString() + '\'' +
                 ", outFields=" + outFields.toString() +
                 ", expr='" + expr + '\'' +
-                ", consistencyLevel='" + consistencyLevel + '\'' +
                 ", offset=" + offset +
                 ", limit=" + limit +
                 ", ignoreGrowing='" + ignoreGrowing + '\'' +

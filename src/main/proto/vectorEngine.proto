@@ -25,18 +25,13 @@ service VectorSearchService {
 
   rpc create_index(CreateIndexRequest) returns (Status) {}
   rpc describe_index(DescribeIndexRequest) returns (DescribeIndexResponse) {}
-  rpc get_index_statistics(GetIndexStatisticsRequest) returns (GetIndexStatisticsResponse) {}
-  // Deprecated: use DescribeIndex instead
-  rpc get_index_state(GetIndexStateRequest) returns (GetIndexStateResponse) {}
-  // Deprecated: use DescribeIndex instead
-  rpc get_index_build_progress(GetIndexBuildProgressRequest) returns (GetIndexBuildProgressResponse) {}
   rpc drop_index(DropIndexRequest) returns (Status) {}
 
-  rpc Insert(InsertRequest) returns (MutationResult) {}
-  rpc Delete(DeleteRequest) returns (MutationResult) {}
-  rpc Search(SearchRequest) returns (SearchResults) {}
-  rpc Flush(FlushRequest) returns (FlushResponse) {}
-  rpc Query(QueryRequest) returns (QueryResults) {}
+  rpc insert_entity(InsertRequest) returns (MutationResult) {}
+  rpc delete_entity(DeleteRequest) returns (MutationResult) {}
+  rpc search_entity(SearchRequest) returns (SearchResults) {}
+  rpc flush_entity(FlushRequest) returns (FlushResponse) {}
+  rpc query_entity(QueryRequest) returns (QueryResults) {}
 
   rpc GetFlushState(GetFlushStateRequest) returns (GetFlushStateResponse) {}
 }
@@ -57,7 +52,7 @@ message BoolResponse {
 * Create collection
 */
 message CreateCollectionRequest {
-  // The unique collection name in milvus.(Required)
+  // The unique collection name in vector search engine.(Required)
   string collection_name = 1;
   // The serialized `CollectionSchema`(Required)
   CollectionSchema schema = 2;
@@ -87,21 +82,17 @@ message LoadCollectionRequest {
 }
 
 message ReleaseCollectionRequest {
-  MsgBase base = 1;
   // The collection name you want to release
-  string collection_name = 2;
+  string collection_name = 1;
 }
 
 message ShowCollectionsRequest {
-  MsgBase base = 1;
-  string db_name = 2;
-  // Not useful for now
-  uint64 time_stamp = 3;
+  uint64 time_stamp = 1;
   // Decide return Loaded collections or All collections(Optional)
-  ShowType type = 4;
+  ShowType type = 2;
   // When type is InMemory, will return these collection's inMemory_percentages.(Optional)
   // Deprecated: use GetLoadingProgress rpc instead
-  repeated string collection_names = 5;
+  repeated string collection_names = 3;
 }
 
 enum ShowType {
@@ -118,7 +109,7 @@ message ShowCollectionsResponse {
   repeated string collection_names = 2;
   // Collection Id array
   repeated int64 collection_ids = 3;
-  // Hybrid timestamps in milvus
+  // Hybrid timestamps in vector search engine
   repeated uint64 created_timestamps = 4;
   // The utc timestamp calculated by created_timestamp
   repeated uint64 created_utc_timestamps = 5;
@@ -130,13 +121,12 @@ message ShowCollectionsResponse {
 }
 
 message DescribeCollectionRequest {
-  MsgBase base = 1;
   // The collection name you want to describe, you can pass collection_name or collectionID
-  string collection_name = 2;
+  string collection_name = 1;
   // The collection ID you want to describe
-  int64 collectionID = 3;
+  int64 collectionID = 2;
   // If time_stamp is not zero, will describe collection success when time_stamp >= created collection timestamp, otherwise will throw error.
-  uint64 time_stamp = 4;
+  uint64 time_stamp = 3;
 }
 
 /**
@@ -149,27 +139,18 @@ message DescribeCollectionResponse {
   CollectionSchema schema = 2;
   // The collection id
   int64 collectionID = 3;
-  // System design related, users should not perceive
-  repeated string virtual_channel_names = 4;
-  // System design related, users should not perceive
-  repeated string physical_channel_names = 5;
-  // Hybrid timestamp in milvus
-  uint64 created_timestamp = 6;
+  // Hybrid timestamp in vector search engine
+  uint64 created_timestamp = 4;
   // The utc timestamp calculated by created_timestamp
-  uint64 created_utc_timestamp = 7;
+  uint64 created_utc_timestamp = 5;
   // The shards number you set.
-  int32 shards_num = 8;
-  // The aliases of this collection
-  repeated string aliases = 9;
+  int32 shards_num = 6;
   // The message ID/posititon when collection is created
-  repeated KeyDataPair start_positions = 10;
-  // The consistency level that the collection used, modification is not supported now.
-  ConsistencyLevel consistency_level = 11;
+  repeated KeyDataPair start_positions = 7;
   // The collection name
-  string collection_name = 12;
-  repeated KeyValuePair properties = 13;
-  string db_name = 14;
-  int64 num_partitions = 15;
+  string collection_name = 8;
+  repeated KeyValuePair properties = 9;
+  int64 num_partitions = 10;
 }
 
 message KeyDataPair {
@@ -178,36 +159,30 @@ message KeyDataPair {
 }
 
 message CreatePartitionRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
+  // The collection name in vector search engine
+  string collection_name = 1;
   // The partition name you want to create.
-  string partition_name = 3;
+  string partition_name = 2;
 }
 
 /*
 * Drop partition in created collection.
 */
 message DropPartitionRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
+  // The collection name in vector search engine
+  string collection_name = 1;
   // The partition name you want to drop
-  string partition_name = 3;
+  string partition_name = 2;
 }
 
 /*
 * Check if partition exist in collection or not.
 */
 message HasPartitionRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
+  // The collection name in vector search engine
+  string collection_name = 1;
   // The partition name you want to check
-  string partition_name = 3;
+  string partition_name = 2;
 }
 
 /*
@@ -215,18 +190,10 @@ message HasPartitionRequest {
 * Then you can get these data as result when you do vector search on this collection.
 */
 message LoadPartitionsRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
+  // The collection name in vector search engine
+  string collection_name = 1;
   // The partition names you want to load
-  repeated string partition_names = 3;
-  // The replicas number you would load, 1 by default
-  int32 replica_number = 4;
-  // create replica used resource group
-  repeated string resource_groups = 5;
-  // Whether to enable refresh mode.
-  bool refresh = 6;
+  repeated string partition_names = 2;
 }
 
 /*
@@ -234,24 +201,19 @@ message LoadPartitionsRequest {
 * Then you can not get these data as result when you do vector search on this collection.
 */
 message ReleasePartitionsRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
+  // The collection name in vector search engine
+  string collection_name = 1;
   // The partition names you want to release
-  repeated string partition_names = 3;
+  repeated string partition_names = 2;
 }
 
 message ShowPartitionsRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  string db_name = 2;
   // The collection name you want to describe, you can pass collection_name or collectionID
-  string collection_name = 3;
-  // The collection id in milvus
-  int64 collectionID = 4;
+  string collection_name = 1;
+  // The collection id in vector search engine
+  int64 collectionID = 2;
   // When type is InMemory, will return these patitions's inMemory_percentages.(Optional)
-  repeated string partition_names = 5;
+  repeated string partition_names = 3;
   // Decide return Loaded partitions or All partitions(Optional)
   // Deprecated: use GetLoadingProgress rpc instead
   ShowType type = 6;
@@ -278,26 +240,23 @@ message ShowPartitionsResponse {
 }
 
 message CreateIndexRequest {
-  MsgBase base = 1;
   // The particular collection name you want to create index.
-  string collection_name = 2;
+  string collection_name = 1;
   // The vector field name in this particular collection
-  string field_name = 3;
+  string field_name = 2;
   // Support keys: index_type,metric_type, params. Different index_type may has different params.
-  repeated KeyValuePair extra_params = 4;
+  repeated KeyValuePair extra_params = 3;
   // Version before 2.0.2 doesn't contain index_name, we use default index name.
-  string index_name = 5;
+  string index_name = 4;
 }
 
 message DescribeIndexRequest {
-  MsgBase base = 1;
-  // The particular collection name in Milvus
-  string collection_name = 2;
+  // The particular collection name in vector search engine
+  string collection_name = 1;
   // The vector field name in this particular collection
-  string field_name = 3;
-  // No need to set up for now @2021.06.30
-  string index_name = 4;
-  uint64 timestamp = 5;
+  string field_name = 2;
+  string index_name = 3;
+  uint64 timestamp = 4;
 }
 
 /*
@@ -321,6 +280,15 @@ message IndexDescription {
   int64 pending_index_rows = 9;
 }
 
+enum IndexState {
+  IndexStateNone = 0;
+  Unissued = 1;
+  InProgress = 2;
+  Finished = 3;
+  Failed = 4;
+  Retry = 5;
+}
+
 /*
 * Describe index response
 */
@@ -331,88 +299,27 @@ message DescribeIndexResponse {
   repeated IndexDescription index_descriptions = 2;
 }
 
-/*
-*  Get index building progress
-*/
-message GetIndexBuildProgressRequest {
-  // Not useful for now
-  MsgBase base = 1;
-  // The collection name in milvus
-  string collection_name = 2;
-  // The vector field name in this collection
-  string field_name = 3;
-  // Not useful for now
-  string index_name = 4;
-}
-
-message GetIndexBuildProgressResponse {
-  Status status = 1;
-  int64 indexed_rows = 2;
-  int64 total_rows = 3;
-}
-
-message GetIndexStateRequest {
-  MsgBase base = 1; // must
-  string collection_name = 2; // must
-  string field_name = 3;
-  string index_name = 4; // No need to set up for now @2021.06.30
-}
-
-message GetIndexStateResponse {
-  Status status = 1;
-  IndexState state = 2;
-  string fail_reason = 3;
-}
-
 message DropIndexRequest {
-  MsgBase base = 1; // must
-  string collection_name = 2; // must
-  // Deprecated: not be used in the milvus
-  string field_name = 3;
-  string index_name = 4;
-}
-
-message GetIndexStatisticsRequest {
-  MsgBase base = 1;
-  // The particular collection name
-  string collection_name = 2;
-  // The index name in this particular collection
+  string collection_name = 1; // must
+  // Deprecated: not be used in the vector search engine
+  string field_name = 2;
   string index_name = 3;
-  uint64 timestamp = 4;
-}
-
-message GetIndexStatisticsResponse {
-  // Response status
-  Status status = 1;
-  // All index information.
-  repeated IndexDescription index_descriptions = 2;
-}
-
-enum IndexState {
-  IndexStateNone = 0;
-  Unissued = 1;
-  InProgress = 2;
-  Finished = 3;
-  Failed = 4;
-  Retry = 5;
 }
 
 message InsertRequest {
-  MsgBase base = 1;
-  string collection_name = 3;
-  string partition_name = 4;
-  repeated FieldData fields_data = 5;
-  repeated uint32 hash_keys = 6;
-  uint32 num_rows = 7;
+  string collection_name = 1;
+  string partition_name = 2;
+  repeated FieldData fields_data = 3;
+  repeated uint32 hash_keys = 4;
+  uint32 num_rows = 5;
 }
 
 message UpsertRequest {
-  MsgBase base = 1;
-  string collection_name = 3;
-  string partition_name = 4;
-  repeated FieldData fields_data = 5;
-  repeated uint32 hash_keys = 6;
-  uint32 num_rows = 7;
+  string collection_name = 1;
+  string partition_name = 2;
+  repeated FieldData fields_data = 3;
+  repeated uint32 hash_keys = 4;
+  uint32 num_rows = 5;
 }
 
 message MutationResult {
@@ -428,43 +335,34 @@ message MutationResult {
 }
 
 message DeleteRequest {
-  MsgBase base = 1;
-  string collection_name = 2;
-  string partition_name = 3;
-  string expr = 4;
-  repeated uint32 hash_keys = 5;
+  string collection_name = 1;
+  string partition_name = 2;
+  string expr = 3;
+  repeated uint32 hash_keys = 4;
 }
 
-
 message SearchRequest {
-  MsgBase base = 1; // must
-  string collection_name = 2; // must
-  repeated string partition_names = 3; // must
-  string dsl = 4; // must
+  string collection_name = 1; // must
+  repeated string partition_names = 2; // must
+  string dsl = 3; // must
   // serialized `PlaceholderGroup`
-  bytes placeholder_group = 5; // must
-  repeated string texts = 6;
-  DslType dsl_type = 7; // must
-  repeated string output_fields = 8;
-  repeated KeyValuePair search_params = 9; // must
-  uint64 travel_timestamp = 10;
-  uint64 guarantee_timestamp = 11; // guarantee_timestamp
-  int64  nq = 12;
-  bool not_return_all_meta = 13;
-  ConsistencyLevel consistency_level = 14;
-  bool use_default_consistency = 15;
-  bool search_by_primary_keys = 16;
+  bytes placeholder_group = 4; // must
+  repeated string texts = 5;
+  DslType dsl_type = 6; // must
+  repeated string output_fields = 7;
+  repeated KeyValuePair search_params = 8; // must
+  uint64 travel_timestamp = 9;
+  uint64 guarantee_timestamp = 10; // guarantee_timestamp
+  int64  nq = 11;
+  bool not_return_all_meta = 12;
+  ConsistencyLevel consistency_level = 13;
+  bool use_default_consistency = 14;
+  bool search_by_primary_keys = 15;
 }
 
 enum DslType {
   Dsl = 0;
   BoolExprV1 = 1;
-}
-
-message Hits {
-  repeated int64 IDs = 1;
-  repeated bytes row_data = 2;
-  repeated float scores = 3;
 }
 
 message SearchResults {
@@ -666,7 +564,7 @@ enum ModelType {
 
 enum ConsistencyLevel {
   Strong = 0;
-  Session = 1; // default in PyMilvus
+  Session = 1; // default in Pyvector search engine
   Bounded = 2;
   Eventually = 3;
   Customized = 4; // Users pass their own `guarantee_timestamp`.

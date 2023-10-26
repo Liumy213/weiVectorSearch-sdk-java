@@ -37,8 +37,6 @@ public interface VectorSearchClient {
     R<RpcStatus> createIndex(CreateIndexParam requestParam);
     R<RpcStatus> dropIndex(DropIndexParam requestParam);
     R<DescribeIndexResponse> describeIndex(DescribeIndexParam requestParam);
-    R<GetIndexStateResponse> getIndexState(GetIndexStateParam requestParam);
-    R<GetIndexBuildProgressResponse> getIndexBuildProgress(GetIndexBuildProgressParam requestParam);
 
     R<MutationResult> insert(InsertParam requestParam);
     R<SearchResults> search(SearchParam requestParam);

@@ -194,9 +194,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             ShowPartitionsRequest.Builder builder = ShowPartitionsRequest.newBuilder()
                     .setCollectionName(collectionName)
                     .addAllPartitionNames(partitionNames);
-            if (StringUtils.isNotEmpty(databaseName)) {
-                builder.setDbName(databaseName);
-            }
             ShowPartitionsRequest showPartitionsRequest = builder.setType(ShowType.InMemory).build();
 
             // Use showPartitions() to check loading percentages of all the partitions.
@@ -280,12 +277,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
                 return R.failed(R.Status.valueOf(response.getErrorCode().getNumber()), response.getReason());
             }
 
-//             sync load, wait until collection finish loading
-            if (requestParam.isSyncLoad()) {
-                waitForLoadingCollection(requestParam.getDatabaseName(), requestParam.getCollectionName(), null,
-                        requestParam.getSyncLoadWaitingInterval(), requestParam.getSyncLoadWaitingTimeout());
-            }
-
             logDebug("LoadCollectionRequest successfully! Collection name:{}",
                     requestParam.getCollectionName());
             return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
@@ -293,7 +284,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             logError("LoadCollectionRequest RPC failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
             return R.failed(e);
-        } catch (Exception e) { // milvus exception for illegal response
+        } catch (Exception e) { // search engine exception for illegal response
             logError("LoadCollectionRequest failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
             return R.failed(e);
@@ -338,9 +329,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             ShowCollectionsRequest.Builder builder = ShowCollectionsRequest.newBuilder()
                     .addAllCollectionNames(requestParam.getCollectionNames())
                     .setType(requestParam.getShowType());
-            if (StringUtils.isNotEmpty(requestParam.getDatabaseName())) {
-                builder.setDbName(requestParam.getDatabaseName());
-            }
             ShowCollectionsRequest showCollectionsRequest = builder.build();
 
             ShowCollectionsResponse response = vectorSearchBrpc().show_collections(showCollectionsRequest);
@@ -482,21 +470,13 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         try {
             LoadPartitionsRequest.Builder builder = LoadPartitionsRequest.newBuilder()
                     .setCollectionName(requestParam.getCollectionName())
-                    .setReplicaNumber(requestParam.getReplicaNumber())
-                    .addAllPartitionNames(requestParam.getPartitionNames())
-                    .setRefresh(requestParam.isRefresh());
+                    .addAllPartitionNames(requestParam.getPartitionNames());
             LoadPartitionsRequest loadPartitionsRequest = builder.build();
 
             Status response = vectorSearchBrpc().load_partitions(loadPartitionsRequest);
 
             if (response.getErrorCode() != ErrorCode.Success) {
                 return R.failed(R.Status.valueOf(response.getErrorCode().getNumber()), response.getReason());
-            }
-
-            // sync load, wait until all partitions finish loading
-            if (requestParam.isSyncLoad()) {
-                waitForLoadingCollection(requestParam.getDatabaseName(), requestParam.getCollectionName(), requestParam.getPartitionNames(),
-                        requestParam.getSyncLoadWaitingInterval(), requestParam.getSyncLoadWaitingTimeout());
             }
 
             logDebug("LoadPartitionsRequest successfully! Collection name:{}, partition names:{}",
@@ -506,7 +486,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             logError("LoadPartitionsRequest RPC failed! Collection name:{}, partition names:{}",
                     requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
             return R.failed(e);
-        } catch (Exception e) { // milvus exception for illegal response
+        } catch (Exception e) { // search engine exception for illegal response
             logError("LoadPartitionsRequest failed! Collection name:{}, partition names:{}",
                     requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
             return R.failed(e);
@@ -577,7 +557,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         try {
             // get collection schema to check input
             DescribeCollectionParam.Builder descBuilder = DescribeCollectionParam.newBuilder()
-                    .withDatabaseName(requestParam.getDatabaseName())
                     .withCollectionName(requestParam.getCollectionName());
             R<DescribeCollectionResponse> descResp = describeCollection(descBuilder.build());
 
@@ -631,15 +610,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
                 return failedStatus("CreateIndexRequest", response);
             }
 
-            if (requestParam.isSyncMode()) {
-                R<Boolean> res = waitForIndex(requestParam.getDatabaseName(), requestParam.getCollectionName(), requestParam.getIndexName(),
-                        requestParam.getFieldName(),
-                        requestParam.getSyncWaitingInterval(), requestParam.getSyncWaitingTimeout());
-                if (res.getStatus() != R.Status.Success.getCode()) {
-                    logError("CreateIndexRequest in sync mode" + " failed:{}", res.getMessage());
-                    return R.failed(R.Status.valueOf(res.getStatus()), res.getMessage());
-                }
-            }
             logDebug("CreateIndexRequest successfully! Collection name:{}， Field name:{}",
                     requestParam.getCollectionName(), requestParam.getFieldName());
             return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
@@ -764,73 +734,12 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         }
     }
 
-    @Deprecated
-    // use DescribeIndex instead
-    @Override
-    public R<GetIndexStateResponse> getIndexState(@NonNull GetIndexStateParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            GetIndexStateRequest getIndexStateRequest = GetIndexStateRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setIndexName(requestParam.getIndexName())
-                    .build();
-
-            GetIndexStateResponse response = vectorSearchBrpc().get_index_state(getIndexStateRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("GetIndexStateRequest successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("GetIndexStateRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("GetIndexStateRequest RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("GetIndexStateRequest failed!", e);
-            return R.failed(e);
-        }
-    }
-
-    @Deprecated
-    // use DescribeIndex instead
-    @Override
-    public R<GetIndexBuildProgressResponse> getIndexBuildProgress(@NonNull GetIndexBuildProgressParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            GetIndexBuildProgressRequest getIndexBuildProgressRequest = GetIndexBuildProgressRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setIndexName(requestParam.getIndexName())
-                    .build();
-
-            GetIndexBuildProgressResponse response = vectorSearchBrpc().get_index_build_progress(getIndexBuildProgressRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("GetIndexBuildProgressRequest successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("GetIndexBuildProgressRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("GetIndexBuildProgressRequest RPC failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("GetIndexBuildProgressRequest failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
     @Override
     public R<MutationResult> insert(@NonNull InsertParam requestParam) {
         logInfo(requestParam.toString());
 
         try {
             DescribeCollectionParam.Builder builder = DescribeCollectionParam.newBuilder()
-                    .withDatabaseName(requestParam.getDatabaseName())
                     .withCollectionName(requestParam.getCollectionName());
             R<DescribeCollectionResponse> descResp = describeCollection(builder.build());
 
@@ -841,7 +750,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
 
             DescCollResponseWrapper wrapper = new DescCollResponseWrapper(descResp.getData());
             ParamUtils.InsertBuilderWrapper builderWraper = new ParamUtils.InsertBuilderWrapper(requestParam, wrapper);
-            MutationResult response = vectorSearchBrpc().insert(builderWraper.buildInsertRequest());
+            MutationResult response = vectorSearchBrpc().insert_entity(builderWraper.buildInsertRequest());
 
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("InsertRequest successfully! Collection name:{}",
@@ -867,7 +776,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
 
         try {
             SearchRequest searchRequest = ParamUtils.convertSearchParam(requestParam);
-            SearchResults response = vectorSearchBrpc().search(searchRequest);
+            SearchResults response = vectorSearchBrpc().search_entity(searchRequest);
 
             //TODO: truncate distance value by round decimal
 
@@ -894,7 +803,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
 
         try {
             QueryRequest queryRequest = ParamUtils.convertQueryParam(requestParam);
-            QueryResults response = this.vectorSearchBrpc().query(queryRequest);
+            QueryResults response = this.vectorSearchBrpc().query_entity(queryRequest);
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("QueryRequest successfully!");
                 return R.success(response);
@@ -926,13 +835,12 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
 
         try {
             DeleteRequest deleteRequest = DeleteRequest.newBuilder()
-                    .setBase(MsgBase.newBuilder().setMsgType(MsgType.Delete).build())
                     .setCollectionName(requestParam.getCollectionName())
                     .setPartitionName(requestParam.getPartitionName())
                     .setExpr(requestParam.getExpr())
                     .build();
 
-            MutationResult response = vectorSearchBrpc().delete(deleteRequest);
+            MutationResult response = vectorSearchBrpc().delete_entity(deleteRequest);
 
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("DeleteRequest successfully! Collection name:{}",
@@ -1000,7 +908,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
                     .setBase(msgBase)
                     .addAllCollectionNames(requestParam.getCollectionNames());
             FlushRequest flushRequest = builder.build();
-            FlushResponse response = vectorSearchBrpc().flush(flushRequest);
+            FlushResponse response = vectorSearchBrpc().flush_entity(flushRequest);
 
             if (Objects.equals(requestParam.getSyncFlush(), Boolean.TRUE)) {
                 waitForFlush(response, requestParam.getSyncFlushWaitingInterval(),

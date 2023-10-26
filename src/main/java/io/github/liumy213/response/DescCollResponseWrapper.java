@@ -70,20 +70,6 @@ public class DescCollResponseWrapper {
     }
 
     /**
-     * Get aliases of the collection.
-     *
-     * @return List of String, aliases of the collection
-     */
-    public List<String> getAliases() {
-        List<String> aliases = new ArrayList<>();
-        for (int i = 0; i < response.getAliasesCount(); ++i) {
-            aliases.add(response.getAliases(i));
-        }
-
-        return aliases;
-    }
-
-    /**
      * Get schema of the collection's fields.
      *
      * @return List of FieldType, schema of the collection's fields
@@ -183,7 +169,6 @@ public class DescCollResponseWrapper {
                 ", id:" + getCollectionID() +
                 ", shardNumber:" + getShardNumber() +
                 ", createdUtcTimestamp:" + getCreatedUtcTimestamp() +
-                ", aliases:" + getAliases().toString() +
                 ", fields:" + getFields().toString() +
                 '}';
     }

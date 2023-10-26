@@ -20,7 +20,7 @@
 package io.github.liumy213.exception;
 
 /**
- * Base class of Milvus exceptions.
+ * Base class of search engine exceptions.
  */
 public abstract class VectorSearchException extends RuntimeException {
     protected Integer status;

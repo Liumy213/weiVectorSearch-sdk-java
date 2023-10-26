@@ -1,7 +1,6 @@
 package io.github.liumy213.client;
 
 import io.github.liumy213.rpc.*;
-import io.github.liumy213.rpc.*;
 
 public interface VectorSearchBrpc{
     BoolResponse has_collection(HasCollectionRequest hasCollectionRequest);
@@ -22,14 +21,12 @@ public interface VectorSearchBrpc{
     Status create_index(CreateIndexRequest createIndexRequest);
     DescribeIndexResponse describe_index(DescribeIndexRequest describeIndexRequest);
     Status drop_index(DropIndexRequest dropIndexRequest);
-    GetIndexStateResponse get_index_state(GetIndexStateRequest getIndexStateRequest);
-    GetIndexBuildProgressResponse get_index_build_progress(GetIndexBuildProgressRequest getIndexBuildProgressRequest);
 
-    MutationResult insert(InsertRequest insertRequest);
-    MutationResult delete(DeleteRequest deleteRequest);
-    SearchResults search(SearchRequest searchRequest);
-    FlushResponse flush(FlushRequest flushRequest);
-    QueryResults query(QueryRequest queryRequest);
+    MutationResult insert_entity(InsertRequest insertRequest);
+    MutationResult delete_entity(DeleteRequest deleteRequest);
+    SearchResults search_entity(SearchRequest searchRequest);
+    FlushResponse flush_entity(FlushRequest flushRequest);
+    QueryResults query_entity(QueryRequest queryRequest);
 
     GetFlushStateResponse get_flush_state(GetFlushStateRequest getFlushStateRequest);
 }

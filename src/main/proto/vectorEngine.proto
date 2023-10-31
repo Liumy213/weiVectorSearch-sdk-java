@@ -11,16 +11,12 @@ service VectorSearchService {
   rpc has_collection(HasCollectionRequest) returns (BoolResponse) {}
   rpc create_collection(CreateCollectionRequest) returns (Status) {}
   rpc drop_collection(DropCollectionRequest) returns (Status) {}
-  rpc load_collection(LoadCollectionRequest) returns (Status) {}
-  rpc release_collection(ReleaseCollectionRequest) returns (Status) {}
   rpc show_collections(ShowCollectionsRequest) returns (ShowCollectionsResponse) {}
   rpc describe_collection(DescribeCollectionRequest) returns (DescribeCollectionResponse) {}
 
   rpc create_partition(CreatePartitionRequest) returns (Status) {}
   rpc drop_partition(DropPartitionRequest) returns (Status) {}
   rpc has_partition(HasPartitionRequest) returns (BoolResponse) {}
-  rpc load_partitions(LoadPartitionsRequest) returns (Status) {}
-  rpc release_partitions(ReleasePartitionsRequest) returns (Status) {}
   rpc show_partitions(ShowPartitionsRequest) returns (ShowPartitionsResponse) {}
 
   rpc create_index(CreateIndexRequest) returns (Status) {}
@@ -70,16 +66,6 @@ message CollectionSchema {
 
 message DropCollectionRequest {
   // The unique collection name.(Required)
-  string collection_name = 1;
-}
-
-message LoadCollectionRequest {
-  // The collection name you want to load
-  string collection_name = 1;
-}
-
-message ReleaseCollectionRequest {
-  // The collection name you want to release
   string collection_name = 1;
 }
 
@@ -180,28 +166,6 @@ message HasPartitionRequest {
   string collection_name = 1;
   // The partition name you want to check
   string partition_name = 2;
-}
-
-/*
-* Load specific partitions data of one collection into query nodes
-* Then you can get these data as result when you do vector search on this collection.
-*/
-message LoadPartitionsRequest {
-  // The collection name in vector search engine
-  string collection_name = 1;
-  // The partition names you want to load
-  repeated string partition_names = 2;
-}
-
-/*
-* Release specific partitions data of one collection from query nodes.
-* Then you can not get these data as result when you do vector search on this collection.
-*/
-message ReleasePartitionsRequest {
-  // The collection name in vector search engine
-  string collection_name = 1;
-  // The partition names you want to release
-  repeated string partition_names = 2;
 }
 
 message ShowPartitionsRequest {
@@ -500,8 +464,6 @@ enum FieldState {
 enum DataType {
   None = 0;
   Bool = 1;
-  Int8 = 2;
-  Int16 = 3;
   Int32 = 4;
   Int64 = 5;
 
@@ -509,13 +471,9 @@ enum DataType {
   Double = 11;
 
   String = 20;
-  VarChar = 21; // variable-length strings with a specified maximum length
   Array = 22;
-  JSON = 23;
 
-  BinaryVector = 100;
   FloatVector = 101;
-  Float16Vector = 102;
 }
 
 /**

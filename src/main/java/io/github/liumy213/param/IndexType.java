@@ -30,15 +30,9 @@ public enum IndexType {
     //Only supported for float vectors
     FLAT(1),
     IVF_FLAT(2),
-    IVF_SQ8(3),
-    IVF_PQ(4),
-    HNSW(5),
-    DISKANN(10),
-    AUTOINDEX(11),
-    SCANN(12),
-    TRIE("Trie", 100),
-    //Only for scalar type field
-    STL_SORT(200),
+    IVF_PQ(3),
+    HNSW(4),
+    DISKANN(5),
     ;
 
     @Getter

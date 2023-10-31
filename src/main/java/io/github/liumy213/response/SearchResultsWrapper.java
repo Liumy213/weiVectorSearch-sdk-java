@@ -177,25 +177,11 @@ public class SearchResultsWrapper extends RowRecordWrapper {
                         }
 
                         Object value = wrapper.valueByIdx((int)offset + n);
-                        if (wrapper.isJsonField()) {
-                            idScores.get(n).put(field.getFieldName(), JSONObject.parseObject(new String((byte[])value)));
-                        } else {
-                            idScores.get(n).put(field.getFieldName(), value);
-                        }
+                        idScores.get(n).put(field.getFieldName(), value);
                     }
 
                     isField = true;
                     break;
-                }
-            }
-
-            // if the output field is not a field name, fetch it from dynamic field
-            if (!isField && dynamicField != null) {
-                for (int n = 0; n < k; ++n) {
-                    Object obj = dynamicField.get((int)offset + n, outputKey);
-                    if (obj != null) {
-                        idScores.get(n).put(outputKey, obj);
-                    }
                 }
             }
         }

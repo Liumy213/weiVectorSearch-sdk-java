@@ -43,7 +43,6 @@ public class FieldType {
     private final Map<String,String> typeParams;
     private final boolean autoID;
     private final boolean partitionKey;
-    private final boolean isDynamic;
 
     private FieldType(@NonNull Builder builder){
         this.name = builder.name;
@@ -54,7 +53,6 @@ public class FieldType {
         this.typeParams = builder.typeParams;
         this.autoID = builder.autoID;
         this.partitionKey = builder.partitionKey;
-        this.isDynamic = builder.isDynamic;
     }
 
     public int getDimension() {
@@ -89,24 +87,12 @@ public class FieldType {
         private final Map<String,String> typeParams = new HashMap<>();
         private boolean autoID = false;
         private boolean partitionKey = false;
-        private boolean isDynamic = false;
 
         private Builder() {
         }
 
         public Builder withName(@NonNull String name) {
             this.name = name;
-            return this;
-        }
-
-        /**
-         * Sets the isDynamic of a field.
-         *
-         * @param isDynamic of a field
-         * @return <code>Builder</code>
-         */
-        public Builder withIsDynamic(boolean isDynamic) {
-            this.isDynamic = isDynamic;
             return this;
         }
 
@@ -254,7 +240,7 @@ public class FieldType {
                 modelType = ModelType.NONE;
             }
 
-            if (dataType == DataType.FloatVector || dataType == DataType.BinaryVector) {
+            if (dataType == DataType.FloatVector) {
                 if (!typeParams.containsKey(Constant.VECTOR_DIM)) {
                     throw new ParamException("Vector field dimension must be specified");
                 }
@@ -266,21 +252,6 @@ public class FieldType {
                     }
                 } catch (NumberFormatException e) {
                     throw new ParamException("Vector field dimension must be an integer number");
-                }
-            }
-
-            if (dataType == DataType.VarChar) {
-                if (!typeParams.containsKey(Constant.MAX_LENGTH)) {
-                    throw new ParamException("Varchar field max length must be specified");
-                }
-
-                try {
-                    int len = Integer.parseInt(typeParams.get(Constant.MAX_LENGTH));
-                    if (len <= 0) {
-                        throw new ParamException("Varchar field max length must be larger than zero");
-                    }
-                } catch (NumberFormatException e) {
-                    throw new ParamException("Varchar field max length must be an integer number");
                 }
             }
 
@@ -304,7 +275,7 @@ public class FieldType {
                 if (primaryKey) {
                     throw new ParamException("Primary key field can not be partition key");
                 }
-                if (dataType != DataType.Int64 && dataType != DataType.VarChar) {
+                if (dataType != DataType.Int64) {
                     throw new ParamException("Only Int64 and Varchar type field can be partition key");
                 }
             }

@@ -267,67 +267,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         }
     }
 
-
-    @Override
-    public R<RpcStatus> loadCollection(@NonNull LoadCollectionParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            LoadCollectionRequest.Builder builder = LoadCollectionRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName());
-            LoadCollectionRequest loadCollectionRequest = builder
-                    .build();
-
-            Status response = vectorSearchBrpc().load_collection(loadCollectionRequest);
-
-            if (response.getErrorCode() != ErrorCode.Success) {
-                return R.failed(R.Status.valueOf(response.getErrorCode().getNumber()), response.getReason());
-            }
-
-            logDebug("LoadCollectionRequest successfully! Collection name:{}",
-                    requestParam.getCollectionName());
-            return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-        } catch (RpcExecutionException e) { // gRPC could throw this exception
-            logError("LoadCollectionRequest RPC failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        } catch (Exception e) { // search engine exception for illegal response
-            logError("LoadCollectionRequest failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<RpcStatus> releaseCollection(@NonNull ReleaseCollectionParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            ReleaseCollectionRequest releaseCollectionRequest = ReleaseCollectionRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .build();
-
-            Status response = vectorSearchBrpc().release_collection(releaseCollectionRequest);
-
-            if (response.getErrorCode() == ErrorCode.Success) {
-                logDebug("ReleaseCollectionRequest successfully! Collection name:{}",
-                        requestParam.getCollectionName());
-                return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-            } else {
-                return failedStatus("ReleaseCollectionRequest", response);
-            }
-        } catch (RpcExecutionException e) {
-            logError("ReleaseCollectionRequest RPC failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("ReleaseCollectionRequest failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-
     @Override
     public R<ShowCollectionsResponse> showCollections(@NonNull ShowCollectionsParam requestParam) {
         logInfo(requestParam.toString());
@@ -466,66 +405,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             return R.failed(e);
         } catch (Exception e) {
             logError("HasPartitionRequest failed!", e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<RpcStatus> loadPartitions(@NonNull LoadPartitionsParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            LoadPartitionsRequest.Builder builder = LoadPartitionsRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .addAllPartitionNames(requestParam.getPartitionNames());
-            LoadPartitionsRequest loadPartitionsRequest = builder.build();
-
-            Status response = vectorSearchBrpc().load_partitions(loadPartitionsRequest);
-
-            if (response.getErrorCode() != ErrorCode.Success) {
-                return R.failed(R.Status.valueOf(response.getErrorCode().getNumber()), response.getReason());
-            }
-
-            logDebug("LoadPartitionsRequest successfully! Collection name:{}, partition names:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionNames());
-            return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-        } catch (RpcExecutionException e) { // gRPC could throw this exception
-            logError("LoadPartitionsRequest RPC failed! Collection name:{}, partition names:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
-            return R.failed(e);
-        } catch (Exception e) { // search engine exception for illegal response
-            logError("LoadPartitionsRequest failed! Collection name:{}, partition names:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<RpcStatus> releasePartitions(@NonNull ReleasePartitionsParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            ReleasePartitionsRequest releasePartitionsRequest = ReleasePartitionsRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .addAllPartitionNames(requestParam.getPartitionNames())
-                    .build();
-
-            Status response = vectorSearchBrpc().release_partitions(releasePartitionsRequest);
-
-            if (response.getErrorCode() == ErrorCode.Success) {
-                logDebug("ReleasePartitionsRequest successfully! Collection name:{}, partition names:{}",
-                        requestParam.getCollectionName(), requestParam.getPartitionNames());
-                return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-            } else {
-                return failedStatus("ReleasePartitionsRequest", response);
-            }
-        } catch (RpcExecutionException e) {
-            logError("ReleasePartitionsRequest RPC failed! Collection name:{}, partition names:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("ReleasePartitionsRequest failed! Collection name:{}, partition names:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionNames(), e);
             return R.failed(e);
         }
     }

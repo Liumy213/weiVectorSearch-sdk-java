@@ -4,15 +4,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.baidu.cloud.thirdparty.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import io.github.liumy213.common.utils.JacksonUtils;
+import io.github.liumy213.exception.IllegalResponseException;
+import io.github.liumy213.exception.ParamException;
+import io.github.liumy213.param.collection.FieldType;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.dml.UpsertParam;
-import io.github.liumy213.exception.IllegalResponseException;
-import io.github.liumy213.exception.ParamException;
-import io.github.liumy213.param.collection.FieldType;
 import io.github.liumy213.response.DescCollResponseWrapper;
-import io.github.liumy213.rpc.*;
 import io.github.liumy213.rpc.*;
 import lombok.Builder;
 import lombok.Getter;
@@ -34,16 +33,12 @@ public class ParamUtils {
         final HashMap<DataType, String> typeErrMsg = new HashMap<>();
         typeErrMsg.put(DataType.None, "Type mismatch for field '%s': the field type is illegal");
         typeErrMsg.put(DataType.Bool, "Type mismatch for field '%s': Bool field value type must be Boolean");
-        typeErrMsg.put(DataType.Int8, "Type mismatch for field '%s': Int32/Int16/Int8 field value type must be Short or Integer");
-        typeErrMsg.put(DataType.Int16, "Type mismatch for field '%s': Int32/Int16/Int8 field value type must be Short or Integer");
         typeErrMsg.put(DataType.Int32, "Type mismatch for field '%s': Int32/Int16/Int8 field value type must be Short or Integer");
         typeErrMsg.put(DataType.Int64, "Type mismatch for field '%s': Int64 field value type must be Long");
         typeErrMsg.put(DataType.Float, "Type mismatch for field '%s': Float field value type must be Float");
         typeErrMsg.put(DataType.Double, "Type mismatch for field '%s': Double field value type must be Double");
         typeErrMsg.put(DataType.String, "Type mismatch for field '%s': String field value type must be String");
-        typeErrMsg.put(DataType.VarChar, "Type mismatch for field '%s': VarChar field value type must be String");
         typeErrMsg.put(DataType.FloatVector, "Type mismatch for field '%s': Float vector field's value type must be List<Float>");
-        typeErrMsg.put(DataType.BinaryVector, "Type mismatch for field '%s': Binary vector field's value type must be ByteBuffer");
         return typeErrMsg;
     }
 
@@ -81,24 +76,6 @@ public class ParamUtils {
                 }
             }
             break;
-            case BinaryVector: {
-                int dim = fieldSchema.getDimension();
-                for (int i = 0; i < values.size(); ++i) {
-                    Object value  = values.get(i);
-                    // is ByteBuffer?
-                    if (!(value instanceof ByteBuffer)) {
-                        throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
-                    }
-
-                    // check dimension
-                    ByteBuffer v = (ByteBuffer)value;
-                    if (v.position()*8 != dim) {
-                        String msg = "Incorrect dimension for field '%s': the no.%d vector's dimension: %d is not equal to field's dimension: %d";
-                        throw new ParamException(String.format(msg, fieldSchema.getName(), i, v.position()*8, dim));
-                    }
-                }
-            }
-            break;
             case Int64:
                 for (Object value : values) {
                     if (!(value instanceof Long)) {
@@ -107,8 +84,6 @@ public class ParamUtils {
                 }
                 break;
             case Int32:
-            case Int16:
-            case Int8:
                 for (Object value : values) {
                     if (!(value instanceof Short) && !(value instanceof Integer)) {
                         throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
@@ -136,17 +111,9 @@ public class ParamUtils {
                     }
                 }
                 break;
-            case VarChar:
             case String:
                 for (Object value : values) {
                     if (!(value instanceof String)) {
-                        throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
-                    }
-                }
-                break;
-            case JSON:
-                for (Object value : values) {
-                    if (!(value instanceof JSONObject)) {
                         throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
                     }
                 }
@@ -209,7 +176,7 @@ public class ParamUtils {
      * @return boolean type
      */
     public static boolean IsVectorIndex(IndexType idx) {
-        return idx != IndexType.INVALID && idx.getCode() < IndexType.TRIE.getCode();
+        return idx != IndexType.INVALID && idx.getCode() <= IndexType.DISKANN.getCode();
     }
 
     /**
@@ -222,10 +189,8 @@ public class ParamUtils {
     public static boolean VerifyIndexType(IndexType indexType, DataType dataType) {
         if (dataType == DataType.FloatVector || dataType == DataType.String) {
             return (IsVectorIndex(indexType));
-        } else if (dataType == DataType.VarChar) {
-            return indexType == IndexType.TRIE;
         } else {
-            return indexType == IndexType.STL_SORT;
+            return false;
         }
     }
 
@@ -338,7 +303,6 @@ public class ParamUtils {
             List<FieldType> fieldTypes = wrapper.getFields();
 
             Map<String, InsertDataInfo> nameInsertInfo = new HashMap<>();
-            InsertDataInfo insertDynamicDataInfo = InsertDataInfo.builder().dataType(DataType.JSON).data(new LinkedList<>()).build();
             for (JSONObject row : rows) {
                 for (FieldType fieldType : fieldTypes) {
                     String fieldName = fieldType.getName();
@@ -540,7 +504,6 @@ public class ParamUtils {
 
     private static final Set<DataType> vectorDataType = new HashSet<DataType>() {{
         add(DataType.FloatVector);
-        add(DataType.BinaryVector);
     }};
 
     private static FieldData genFieldData(String fieldName, DataType dataType, List<?> objects) {
@@ -570,25 +533,6 @@ public class ParamUtils {
                 FloatArray floatArray = FloatArray.newBuilder().addAllData(floats).build();
                 VectorField vectorField = VectorField.newBuilder().setDim(dim).setFloatVector(floatArray).build();
                 return builder.setFieldName(fieldName).setType(DataType.FloatVector).setVectors(vectorField).build();
-            } else if (dataType == DataType.BinaryVector) {
-                ByteBuffer totalBuf = null;
-                int dim = 0;
-                // each object is ByteBuffer
-                for (Object object : objects) {
-                    ByteBuffer buf = (ByteBuffer) object;
-                    if (totalBuf == null) {
-                        totalBuf = ByteBuffer.allocate(buf.position() * objects.size());
-                        totalBuf.put(buf.array());
-                        dim = buf.position() * 8;
-                    } else {
-                        totalBuf.put(buf.array());
-                    }
-                }
-
-                assert totalBuf != null;
-                ByteString byteString = ByteString.copyFrom(totalBuf.array());
-                VectorField vectorField = VectorField.newBuilder().setDim(dim).setBinaryVector(byteString).build();
-                return builder.setFieldName(fieldName).setType(DataType.BinaryVector).setVectors(vectorField).build();
             }
         } else {
             switch (dataType) {
@@ -601,9 +545,7 @@ public class ParamUtils {
                     ScalarField scalarField = ScalarField.newBuilder().setLongData(longArray).build();
                     return builder.setFieldName(fieldName).setType(dataType).setScalars(scalarField).build();
                 }
-                case Int32:
-                case Int16:
-                case Int8: {
+                case Int32: {
                     List<Integer> integers = objects.stream().map(p -> p instanceof Short ? ((Short) p).intValue() : (Integer) p).collect(Collectors.toList());
                     IntArray intArray = IntArray.newBuilder().addAllData(integers).build();
                     ScalarField scalarField = ScalarField.newBuilder().setIntData(intArray).build();
@@ -627,21 +569,10 @@ public class ParamUtils {
                     ScalarField scalarField = ScalarField.newBuilder().setDoubleData(doubleArray).build();
                     return builder.setFieldName(fieldName).setType(dataType).setScalars(scalarField).build();
                 }
-                case String:
-                case VarChar: {
+                case String: {
                     List<String> strings = objects.stream().map(p -> (String) p).collect(Collectors.toList());
                     StringArray stringArray = StringArray.newBuilder().addAllData(strings).build();
                     ScalarField scalarField = ScalarField.newBuilder().setStringData(stringArray).build();
-                    return builder.setFieldName(fieldName).setType(dataType).setScalars(scalarField).build();
-                }
-                case JSON: {
-                    List<ByteString> byteStrings = objects.stream().map(p -> ByteString.copyFromUtf8(((JSONObject) p).toJSONString()))
-                            .collect(Collectors.toList());
-                    JSONArray jsonArray = JSONArray.newBuilder().addAllData(byteStrings).build();
-                    ScalarField scalarField = ScalarField.newBuilder().setJsonData(jsonArray).build();
-                    if (isDynamic) {
-                        return builder.setType(dataType).setScalars(scalarField).setIsDynamic(true).build();
-                    }
                     return builder.setFieldName(fieldName).setType(dataType).setScalars(scalarField).build();
                 }
             }
@@ -663,12 +594,8 @@ public class ParamUtils {
                 .withPrimaryKey(field.getIsPrimaryKey())
                 .withPartitionKey(field.getIsPartitionKey())
                 .withAutoID(field.getAutoID())
-                .withDataType(field.getDataType())
-                .withIsDynamic(field.getIsDynamic());
+                .withDataType(field.getDataType());
 
-        if (field.getIsDynamic()) {
-            builder.withIsDynamic(true);
-        }
 
         List<KeyValuePair> keyValuePairs = field.getTypeParamsList();
         keyValuePairs.forEach((kv) -> builder.addTypeParam(kv.getKey(), kv.getValue()));
@@ -690,7 +617,6 @@ public class ParamUtils {
                 .setIsPartitionKey(field.isPartitionKey())
                 .setAutoID(field.isAutoID())
                 .setDataType(field.getDataType())
-                .setIsDynamic(field.isDynamic())
                 .setModelType(field.getModelType());
 
         // assemble typeParams for CollectionSchema

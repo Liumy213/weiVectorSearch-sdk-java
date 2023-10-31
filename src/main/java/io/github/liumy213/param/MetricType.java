@@ -29,9 +29,5 @@ public enum MetricType {
     L2,
     IP,
     COSINE,
-
-    // Only for binary vectors
-    HAMMING,
-    JACCARD,
     ;
 }

@@ -37,7 +37,6 @@ public abstract class RowRecordWrapper {
      */
     protected QueryResultsWrapper.RowRecord buildRowRecord(QueryResultsWrapper.RowRecord record, long index) {
         for (String outputKey : getOutputFields()) {
-            boolean isField = false;
             for (FieldData field : getFieldDataList()) {
                 if (outputKey.equals(field.getFieldName())) {
                     FieldDataWrapper wrapper = new FieldDataWrapper(field);
@@ -45,29 +44,8 @@ public abstract class RowRecordWrapper {
                         throw new ParamException("Index out of range");
                     }
                     Object value = wrapper.valueByIdx((int)index);
-                    if (wrapper.isJsonField()) {
-                        JSONObject jsonField = JSONObject.parseObject(new String((byte[])value));
-                        if (wrapper.isDynamicField()) {
-                            for (String key: jsonField.keySet()) {
-                                record.put(key, jsonField.get(key));
-                            }
-                        } else {
-                            record.put(field.getFieldName(), jsonField);
-                        }
-                    } else {
-                        record.put(field.getFieldName(), value);
-                    }
-                    isField = true;
+                    record.put(field.getFieldName(), value);
                     break;
-                }
-            }
-
-            // if the output field is not a field name, fetch it from dynamic field
-            if (!isField) {
-                FieldDataWrapper dynamicField = getDynamicWrapper();
-                Object obj = dynamicField.get((int)index, outputKey);
-                if (obj != null) {
-                    record.put(outputKey, obj);
                 }
             }
         }

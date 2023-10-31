@@ -17,16 +17,12 @@ public interface VectorSearchClient {
     R<Boolean> hasCollection(HasCollectionParam requestParam);
     R<RpcStatus> createCollection(CreateCollectionParam requestParam);
     R<RpcStatus> dropCollection(DropCollectionParam requestParam);
-    R<RpcStatus> loadCollection(LoadCollectionParam requestParam);
-    R<RpcStatus> releaseCollection(ReleaseCollectionParam requestParam);
     R<ShowCollectionsResponse> showCollections(ShowCollectionsParam requestParam);
     R<DescribeCollectionResponse> describeCollection(DescribeCollectionParam requestParam);
 
     R<RpcStatus> createPartition(CreatePartitionParam requestParam);
     R<RpcStatus> dropPartition(DropPartitionParam requestParam);
     R<Boolean> hasPartition(HasPartitionParam requestParam);
-    R<RpcStatus> loadPartitions(LoadPartitionsParam requestParam);
-    R<RpcStatus> releasePartitions(ReleasePartitionsParam requestParam);
     R<ShowPartitionsResponse> showPartitions(ShowPartitionsParam requestParam);
 
     R<RpcStatus> createIndex(CreateIndexParam requestParam);

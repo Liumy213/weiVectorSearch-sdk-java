@@ -99,16 +99,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<RpcStatus> loadCollection(LoadCollectionParam requestParam) {
-        return retry(()-> super.loadCollection(requestParam));
-    }
-
-    @Override
-    public R<RpcStatus> releaseCollection(ReleaseCollectionParam requestParam) {
-        return retry(()-> super.releaseCollection(requestParam));
-    }
-
-    @Override
     public R<ShowCollectionsResponse> showCollections(ShowCollectionsParam requestParam) {
         return retry(()-> super.showCollections(requestParam));
     }
@@ -131,16 +121,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     @Override
     public R<Boolean> hasPartition(HasPartitionParam requestParam) {
         return retry(()-> super.hasPartition(requestParam));
-    }
-
-    @Override
-    public R<RpcStatus> loadPartitions(LoadPartitionsParam requestParam) {
-        return retry(()-> super.loadPartitions(requestParam));
-    }
-
-    @Override
-    public R<RpcStatus> releasePartitions(ReleasePartitionsParam requestParam) {
-        return retry(()-> super.releasePartitions(requestParam));
     }
 
     @Override

@@ -213,13 +213,6 @@ public class ParamUtils {
                                     DescCollResponseWrapper wrapper) {
             String collectionName = requestParam.getCollectionName();
 
-            // currently, not allow to upsert for collection whose primary key is auto-generated
-            FieldType pk = wrapper.getPrimaryField();
-            if (pk.isAutoID()) {
-                throw new ParamException(String.format("Upsert don't support autoID==True, collection: %s",
-                        requestParam.getCollectionName()));
-            }
-
             // generate upsert request builder
             upsertBuilder = UpsertRequest.newBuilder()
                     .setCollectionName(collectionName)
@@ -264,12 +257,9 @@ public class ParamUtils {
 
             // convert insert data
             List<InsertParam.Field> columnFields = requestParam.getFields();
-            List<JSONObject> rowFields = requestParam.getRows();
 
             if (CollectionUtils.isNotEmpty(columnFields)) {
                 checkAndSetColumnData(wrapper.getFields(), columnFields);
-            } else {
-                checkAndSetRowData(wrapper, rowFields);
             }
         }
 
@@ -296,43 +286,6 @@ public class ParamUtils {
                     String msg = "The field: " + fieldType.getName() + " is not provided.";
                     throw new ParamException(msg);
                 }
-            }
-        }
-
-        private void checkAndSetRowData(DescCollResponseWrapper wrapper, List<JSONObject> rows) {
-            List<FieldType> fieldTypes = wrapper.getFields();
-
-            Map<String, InsertDataInfo> nameInsertInfo = new HashMap<>();
-            for (JSONObject row : rows) {
-                for (FieldType fieldType : fieldTypes) {
-                    String fieldName = fieldType.getName();
-                    InsertDataInfo insertDataInfo = nameInsertInfo.getOrDefault(fieldName, InsertDataInfo.builder()
-                            .fieldName(fieldName).dataType(fieldType.getDataType()).data(new LinkedList<>()).build());
-
-                    // check normalField
-                    Object rowFieldData = row.get(fieldName);
-                    if (rowFieldData != null) {
-                        if (fieldType.isAutoID()) {
-                            String msg = "The primary key: " + fieldName + " is auto generated, no need to input.";
-                            throw new ParamException(msg);
-                        }
-                        checkFieldData(fieldType, Lists.newArrayList(rowFieldData));
-
-                        insertDataInfo.getData().add(rowFieldData);
-                        nameInsertInfo.put(fieldName, insertDataInfo);
-                    } else {
-                        // check if autoId
-                        if (!fieldType.isAutoID()) {
-                            String msg = "The field: " + fieldType.getName() + " is not provided.";
-                            throw new ParamException(msg);
-                        }
-                    }
-                }
-            }
-
-            for (String fieldNameKey : nameInsertInfo.keySet()) {
-                InsertDataInfo insertDataInfo = nameInsertInfo.get(fieldNameKey);
-                this.addFieldsData(genFieldData(insertDataInfo.getFieldName(), insertDataInfo.getDataType(), insertDataInfo.getData()));
             }
         }
 
@@ -591,9 +544,6 @@ public class ParamUtils {
         FieldType.Builder builder = FieldType.newBuilder()
                 .withName(field.getName())
                 .withDescription(field.getDescription())
-                .withPrimaryKey(field.getIsPrimaryKey())
-                .withPartitionKey(field.getIsPartitionKey())
-                .withAutoID(field.getAutoID())
                 .withDataType(field.getDataType());
 
 
@@ -613,9 +563,6 @@ public class ParamUtils {
         FieldSchema.Builder builder = FieldSchema.newBuilder()
                 .setName(field.getName())
                 .setDescription(field.getDescription())
-                .setIsPrimaryKey(field.isPrimaryKey())
-                .setIsPartitionKey(field.isPartitionKey())
-                .setAutoID(field.isAutoID())
                 .setDataType(field.getDataType())
                 .setModelType(field.getModelType());
 

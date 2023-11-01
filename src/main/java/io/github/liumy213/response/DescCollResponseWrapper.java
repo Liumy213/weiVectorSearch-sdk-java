@@ -52,24 +52,6 @@ public class DescCollResponseWrapper {
     }
 
     /**
-     * Get shard number of the collection.
-     *
-     * @return <code>int</code> shard number of the collection
-     */
-    public int getShardNumber() {
-        return response.getShardsNum();
-    }
-
-    /**
-     * Get utc timestamp when collection created.
-     *
-     * @return <code>long</code> utc timestamp when collection created
-     */
-    public long getCreatedUtcTimestamp() {
-        return response.getCreatedUtcTimestamp();
-    }
-
-    /**
      * Get schema of the collection's fields.
      *
      * @return List of FieldType, schema of the collection's fields
@@ -103,42 +85,6 @@ public class DescCollResponseWrapper {
     }
 
     /**
-     * Get the partition key field.
-     * Return null if the partition key field doesn't exist.
-     *
-     * @return {@link FieldType} schema of the partition key field
-     */
-    public FieldType getPartitionKeyField() {
-        CollectionSchema schema = response.getSchema();
-        for (int i = 0; i < schema.getFieldsCount(); ++i) {
-            FieldSchema field = schema.getFields(i);
-            if (field.getIsPartitionKey()) {
-                return ParamUtils.ConvertField(field);
-            }
-        }
-
-        return null;
-    }
-
-    /**
-     * Get the primary key field.
-     * throw ParamException if the primary key field doesn't exist.
-     *
-     * @return {@link FieldType} schema of the primary key field
-     */
-    public FieldType getPrimaryField() {
-        CollectionSchema schema = response.getSchema();
-        for (int i = 0; i < schema.getFieldsCount(); ++i) {
-            FieldSchema field = schema.getFields(i);
-            if (field.getIsPrimaryKey()) {
-                return ParamUtils.ConvertField(field);
-            }
-        }
-
-        throw new ParamException("No primary key found.");
-    }
-
-    /**
      * Get the vector key field.
      * throw ParamException if the vector key field doesn't exist.
      *
@@ -167,8 +113,6 @@ public class DescCollResponseWrapper {
                 "name:'" + getCollectionName() + '\'' +
                 ", description:'" + getCollectionDescription() + '\'' +
                 ", id:" + getCollectionID() +
-                ", shardNumber:" + getShardNumber() +
-                ", createdUtcTimestamp:" + getCreatedUtcTimestamp() +
                 ", fields:" + getFields().toString() +
                 '}';
     }

@@ -6,20 +6,16 @@ public interface VectorSearchBrpc{
     BoolResponse has_collection(HasCollectionRequest hasCollectionRequest);
     Status create_collection(CreateCollectionRequest createCollectionRequest);
     Status drop_collection(DropCollectionRequest dropCollectionRequest);
-    ShowCollectionsResponse show_collections(ShowCollectionsRequest showCollectionsRequest);
     DescribeCollectionResponse describe_collection(DescribeCollectionRequest describeCollectionRequest);
 
     Status create_partition(CreatePartitionRequest createPartitionRequest);
     Status drop_partition(DropPartitionRequest dropPartitionRequest);
     BoolResponse has_partition(HasPartitionRequest hasPartitionRequest);
-    ShowPartitionsResponse show_partitions(ShowPartitionsRequest showPartitionsRequest);
 
     Status create_index(CreateIndexRequest createIndexRequest);
-    DescribeIndexResponse describe_index(DescribeIndexRequest describeIndexRequest);
     Status drop_index(DropIndexRequest dropIndexRequest);
 
     MutationResult insert_entity(InsertRequest insertRequest);
     SearchResults search_entity(SearchRequest searchRequest);
     QueryResults query_entity(QueryRequest queryRequest);
-    MutationResult delete_entity(DeleteRequest deleteRequest);
 }

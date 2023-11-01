@@ -34,20 +34,15 @@ import java.util.List;
 @Getter
 public class InsertParam {
     protected final List<Field> fields;
-    protected final List<JSONObject> rows;
-
-    protected final String databaseName;
     protected final String collectionName;
     protected final String partitionName;
     protected final int rowCount;
 
     protected InsertParam(@NonNull Builder builder) {
-        this.databaseName = builder.databaseName;
         this.collectionName = builder.collectionName;
         this.partitionName = builder.partitionName;
         this.fields = builder.fields;
         this.rowCount = builder.rowCount;
-        this.rows = builder.rows;
     }
 
     public static Builder newBuilder() {
@@ -62,7 +57,6 @@ public class InsertParam {
         protected String collectionName;
         protected String partitionName = "";
         protected List<Field> fields;
-        protected List<JSONObject> rows;
         protected int rowCount;
 
         protected Builder() {
@@ -115,18 +109,6 @@ public class InsertParam {
         }
 
         /**
-         * Sets the row data to insert. The rows list cannot be empty.
-         *
-         * @param rows insert row data
-         * @return <code>Builder</code>
-         * @see JSONObject
-         */
-        public Builder withRows(@NonNull List<JSONObject> rows) {
-            this.rows = rows;
-            return this;
-        }
-
-        /**
          * Verifies parameters and creates a new {@link InsertParam} instance.
          *
          * @return {@link InsertParam}
@@ -134,14 +116,11 @@ public class InsertParam {
         public InsertParam build() throws ParamException {
             ParamUtils.CheckNullEmptyString(collectionName, "Collection name");
 
-            if (CollectionUtils.isEmpty(fields) && CollectionUtils.isEmpty(rows)) {
+            if (CollectionUtils.isEmpty(fields)) {
                 throw new ParamException("Fields cannot be empty");
             }
-            if (CollectionUtils.isNotEmpty(fields) && CollectionUtils.isNotEmpty(rows)) {
-                throw new ParamException("Only one of Fields and Rows is allowed to be non-empty.");
-            }
 
-            int count;
+            int count = 0;
             if (CollectionUtils.isNotEmpty(fields)) {
                 if (fields.get(0) == null) {
                     throw new ParamException("Field cannot be null." +
@@ -149,9 +128,6 @@ public class InsertParam {
                 }
                 count = fields.get(0).getValues().size();
                 checkFields(count);
-            } else {
-                count = rows.size();
-                checkRows();
             }
 
             this.rowCount = count;
@@ -183,24 +159,6 @@ public class InsertParam {
             for (Field field : fields) {
                 if (field.getValues().size() != count) {
                     throw new ParamException("Row count of fields must be equal");
-                }
-            }
-        }
-
-        protected void checkRows() {
-            for (JSONObject row : rows) {
-                if (row == null) {
-                    throw new ParamException("Row cannot be null." +
-                            " If the field is auto-id, just ignore it from withRows()");
-                }
-
-                for (String rowFieldName : row.keySet()) {
-                    ParamUtils.CheckNullEmptyString(rowFieldName, "Field name");
-
-                    if (row.get(rowFieldName) == null) {
-                        throw new ParamException("Field value cannot be empty." +
-                                " If the field is auto-id, just ignore it from withRows()");
-                    }
                 }
             }
         }

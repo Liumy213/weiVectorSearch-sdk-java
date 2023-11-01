@@ -74,18 +74,6 @@ public class UpsertParam extends InsertParam {
         }
 
         /**
-         * Sets the row data to insert. The rows list cannot be empty.
-         *
-         * @param rows insert row data
-         * @return <code>Builder</code>
-         * @see JSONObject
-         */
-        public Builder withRows(@NonNull List<JSONObject> rows) {
-            super.withRows(rows);
-            return this;
-        }
-
-        /**
          * Verifies parameters and creates a new {@link UpsertParam} instance.
          *
          * @return {@link UpsertParam}

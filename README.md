@@ -11,7 +11,7 @@ You can use Apache Maven to download the SDK.
 <dependency>
     <groupId>io.github.liumy213</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>
-    <version>0.0.6</version>
+    <version>0.0.7</version>
 </dependency>
 ```
 
@@ -114,15 +114,4 @@ SearchParam textSearchParam = SearchParam.newBuilder()
         .addOutField(idFieldName)
         .build();
 R<SearchResults> textSearchRet = vectorSearchServiceClient.search(textSearchParam);
-```
-
-### Delete data
-Delete data from the service
-```java
-DeleteParam deleteParam = DeleteParam.newBuilder()
-        .withCollectionName(collectionName)
-        .withPartitionName(partitionName)
-        .withExpr("id in [1234567890]")
-        .build();
-vectorSearchServiceClient.delete(deleteParam);
 ```

@@ -4,12 +4,10 @@ import io.github.liumy213.param.ConnectParam;
 import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.dml.DeleteParam;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.index.CreateIndexParam;
-import io.github.liumy213.param.index.DescribeIndexParam;
 import io.github.liumy213.param.index.DropIndexParam;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.rpc.*;
@@ -99,11 +97,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<ShowCollectionsResponse> showCollections(ShowCollectionsParam requestParam) {
-        return retry(()-> super.showCollections(requestParam));
-    }
-
-    @Override
     public R<DescribeCollectionResponse> describeCollection(DescribeCollectionParam requestParam) {
         return retry(()-> super.describeCollection(requestParam));
     }
@@ -124,11 +117,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<ShowPartitionsResponse> showPartitions(ShowPartitionsParam requestParam) {
-        return retry(()-> super.showPartitions(requestParam));
-    }
-
-    @Override
     public R<RpcStatus> createIndex(CreateIndexParam requestParam) {
         return retry(()-> super.createIndex(requestParam));
     }
@@ -136,11 +124,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     @Override
     public R<RpcStatus> dropIndex(DropIndexParam requestParam) {
         return retry(()-> super.dropIndex(requestParam));
-    }
-
-    @Override
-    public R<DescribeIndexResponse> describeIndex(DescribeIndexParam requestParam) {
-        return retry(()-> super.describeIndex(requestParam));
     }
 
     @Override
@@ -158,8 +141,4 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
         return retry(()-> super.query(requestParam));
     }
 
-    @Override
-    public R<MutationResult> delete(DeleteParam requestParam) {
-        return retry(()-> super.delete(requestParam));
-    }
 }

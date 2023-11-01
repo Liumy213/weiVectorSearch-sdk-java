@@ -21,7 +21,6 @@ package io.github.liumy213.param.collection;
 
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.ParamUtils;
-import io.github.liumy213.rpc.ShowType;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -34,11 +33,9 @@ import java.util.List;
 @Getter
 public class ShowCollectionsParam {
     private final List<String> collectionNames;
-    private final ShowType showType;
 
     private ShowCollectionsParam(@NonNull Builder builder) {
         this.collectionNames = builder.collectionNames;
-        this.showType = builder.showType;
     }
 
     public static Builder newBuilder() {
@@ -50,10 +47,6 @@ public class ShowCollectionsParam {
      */
     public static final class Builder {
         private final List<String> collectionNames = new ArrayList<>();
-        // showType:
-        //   default showType = ShowType.All
-        //   if collectionNames is not empty, set showType = ShowType.InMemory
-        private ShowType showType = ShowType.All;
 
         private Builder() {
         }
@@ -66,17 +59,6 @@ public class ShowCollectionsParam {
          */
         public Builder withCollectionNames(@NonNull List<String> collectionNames) {
             collectionNames.forEach(this::addCollectionName);
-            return this;
-        }
-
-        /**
-         * Sets a show type. Show Type can be empty or null, default value is ShowType.All.
-         *
-         * @param showType ShowType
-         * @return <code>Builder</code>
-         */
-        public Builder withShowType(ShowType showType) {
-            this.showType = showType;
             return this;
         }
 
@@ -103,7 +85,6 @@ public class ShowCollectionsParam {
                 for (String collectionName : collectionNames) {
                     ParamUtils.CheckNullEmptyString(collectionName, "Collection name");
                 }
-                this.showType = ShowType.InMemory;
             }
 
             return new ShowCollectionsParam(this);
@@ -119,7 +100,6 @@ public class ShowCollectionsParam {
     public String toString() {
         return "ShowCollectionsParam{" +
                 "collectionNames='" + collectionNames.toString() + '\'' +
-                ", showType=" + showType.toString() +
                 '}';
     }
 }

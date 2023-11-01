@@ -1,19 +1,16 @@
 package io.github.liumy213.client;
 
 import com.baidu.fengchao.stargate.remoting.exceptions.RpcExecutionException;
-import io.github.liumy213.exception.IllegalResponseException;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.LogLevel;
 import io.github.liumy213.param.ParamUtils;
 import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
-import io.github.liumy213.param.dml.DeleteParam;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.index.CreateIndexParam;
-import io.github.liumy213.param.index.DescribeIndexParam;
 import io.github.liumy213.param.index.DropIndexParam;
 import io.github.liumy213.param.partition.*;
 import io.github.liumy213.response.DescCollResponseWrapper;
@@ -24,9 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
@@ -91,7 +86,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             // Construct CreateCollectionRequest
             CreateCollectionRequest.Builder builder = CreateCollectionRequest.newBuilder()
                     .setCollectionName(requestParam.getCollectionName())
-                    .setShardsNum(requestParam.getShardsNum())
                     .setSchema(collectionSchemaBuilder.build().toBuilder());
             if (requestParam.getPartitionsNum() > 0) {
                 builder.setNumPartitions(requestParam.getPartitionsNum());
@@ -144,152 +138,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         } catch (Exception e) {
             logError("DropCollectionRequest failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    private void waitForLoadingCollection(String databaseName, String collectionName, List<String> partitionNames,
-                                          long waitingInterval, long timeout) throws IllegalResponseException {
-        long tsBegin = System.currentTimeMillis();
-        if (partitionNames == null || partitionNames.isEmpty()) {
-            ShowCollectionsRequest.Builder builder = ShowCollectionsRequest.newBuilder()
-                    .addCollectionNames(collectionName)
-                    .setType(ShowType.InMemory);
-            ShowCollectionsRequest showCollectionRequest = builder.build();
-
-            // Use showCollection() to check loading percentages of the collection.
-            // If the inMemory percentage is 100, that means the collection has finished loading.
-            // Otherwise, this thread will sleep a small interval and check again.
-            // If waiting time exceed timeout, exist the circle
-            while (true) {
-                long tsNow = System.currentTimeMillis();
-                if ((tsNow - tsBegin) >= timeout * 1000) {
-                    logWarning("Waiting load thread is timeout, loading process may not be finished");
-                    break;
-                }
-
-                ShowCollectionsResponse response = vectorSearchBrpc().show_collections(showCollectionRequest);
-                int namesCount = response.getCollectionNamesCount();
-                int percentagesCount = response.getInMemoryPercentagesCount();
-                if (namesCount != 1) {
-                    throw new IllegalResponseException("ShowCollectionsResponse is illegal. Collection count: "
-                            + namesCount);
-                }
-
-                if (namesCount != percentagesCount) {
-                    String msg = "ShowCollectionsResponse is illegal. Collection count: " + namesCount
-                            + " memory percentages count: " + percentagesCount;
-                    throw new IllegalResponseException(msg);
-                }
-
-                long percentage = response.getInMemoryPercentages(0);
-                String responseCollection = response.getCollectionNames(0);
-                if (responseCollection.compareTo(collectionName) == 0 && percentage >= 100) {
-                    break;
-                }
-
-                try {
-                    logDebug("Waiting load, interval: {} ms, percentage: {}%", waitingInterval, percentage);
-                    TimeUnit.MILLISECONDS.sleep(waitingInterval);
-                } catch (InterruptedException e) {
-                    logWarning("Waiting load thread is interrupted, loading process may not be finished");
-                    break;
-                }
-            }
-
-        } else {
-            ShowPartitionsRequest.Builder builder = ShowPartitionsRequest.newBuilder()
-                    .setCollectionName(collectionName)
-                    .addAllPartitionNames(partitionNames);
-            ShowPartitionsRequest showPartitionsRequest = builder.setType(ShowType.InMemory).build();
-
-            // Use showPartitions() to check loading percentages of all the partitions.
-            // If each partition's  inMemory percentage is 100, that means all the partitions have finished loading.
-            // Otherwise, this thread will sleep a small interval and check again.
-            // If waiting time exceed timeout, exist the circle
-            while (true) {
-                long tsNow = System.currentTimeMillis();
-                if ((tsNow - tsBegin) >= timeout * 1000) {
-                    logWarning("Waiting load thread is timeout, loading process may not be finished");
-                    break;
-                }
-
-                ShowPartitionsResponse response = vectorSearchBrpc().show_partitions(showPartitionsRequest);
-                int namesCount = response.getPartitionNamesCount();
-                int percentagesCount = response.getInMemoryPercentagesCount();
-                if (namesCount != percentagesCount) {
-                    String msg = "ShowPartitionsResponse is illegal. Partition count: " + namesCount
-                            + " memory percentages count: " + percentagesCount;
-                    throw new IllegalResponseException(msg);
-                }
-
-                // construct a hash map to check each partition's inMemory percentage by name
-                Map<String, Long> percentages = new HashMap<>();
-                for (int i = 0; i < response.getInMemoryPercentagesCount(); ++i) {
-                    percentages.put(response.getPartitionNames(i), response.getInMemoryPercentages(i));
-                }
-
-                String partitionNoMemState = "";
-                String partitionNotFullyLoad = "";
-                boolean allLoaded = true;
-                for (String name : partitionNames) {
-                    if (!percentages.containsKey(name)) {
-                        allLoaded = false;
-                        partitionNoMemState = name;
-                        break;
-                    }
-                    if (percentages.get(name) < 100L) {
-                        allLoaded = false;
-                        partitionNotFullyLoad = name;
-                        break;
-                    }
-                }
-
-                if (allLoaded) {
-                    break;
-                }
-
-                try {
-                    String msg = "Waiting load, interval: " + waitingInterval + "ms";
-                    if (!partitionNoMemState.isEmpty()) {
-                        msg += ("Partition " + partitionNoMemState + " has no memory state");
-                    }
-                    if (!partitionNotFullyLoad.isEmpty()) {
-                        msg += ("Partition " + partitionNotFullyLoad + " has not fully loaded");
-                    }
-                    logDebug(msg);
-                    TimeUnit.MILLISECONDS.sleep(waitingInterval);
-                } catch (InterruptedException e) {
-                    logWarning("Waiting load thread is interrupted, load process may not be finished");
-                    break;
-                }
-            }
-        }
-    }
-
-    @Override
-    public R<ShowCollectionsResponse> showCollections(@NonNull ShowCollectionsParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            ShowCollectionsRequest.Builder builder = ShowCollectionsRequest.newBuilder()
-                    .addAllCollectionNames(requestParam.getCollectionNames())
-                    .setType(requestParam.getShowType());
-            ShowCollectionsRequest showCollectionsRequest = builder.build();
-
-            ShowCollectionsResponse response = vectorSearchBrpc().show_collections(showCollectionsRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("ShowCollectionsRequest successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("ShowCollectionsRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("ShowCollectionsRequest RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("ShowCollectionsRequest failed!", e);
             return R.failed(e);
         }
     }
@@ -410,33 +258,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
     }
 
     @Override
-    public R<ShowPartitionsResponse> showPartitions(@NonNull ShowPartitionsParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            ShowPartitionsRequest showPartitionsRequest = ShowPartitionsRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .addAllPartitionNames(requestParam.getPartitionNames())
-                    .build();
-
-            ShowPartitionsResponse response = vectorSearchBrpc().show_partitions(showPartitionsRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("ShowPartitionsRequest successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("ShowPartitionsRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("ShowPartitionsRequest RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("ShowPartitionsRequest failed!", e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
     public R<RpcStatus> createIndex(@NonNull CreateIndexParam requestParam) {
         logInfo(requestParam.toString());
 
@@ -506,86 +327,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         } catch (Exception e) {
             logError("CreateIndexRequest failed! Collection name:{} ，Field name:{}",
                     requestParam.getCollectionName(), requestParam.getFieldName(), e);
-            return R.failed(e);
-        }
-    }
-
-    private R<Boolean> waitForIndex(String databaseName, String collectionName, String indexName, String fieldName,
-                                    long waitingInterval, long timeout) {
-        // This method use getIndexState() to check index state.
-        // If all index state become Finished, then we say the sync index action is finished.
-        // If waiting time exceed timeout, exist the circle
-        long tsBegin = System.currentTimeMillis();
-        while (true) {
-            long tsNow = System.currentTimeMillis();
-            if ((tsNow - tsBegin) >= timeout * 1000) {
-                String msg = "Waiting index thread is timeout, index process may not be finished";
-                logWarning(msg);
-                return R.failed(R.Status.UnexpectedError, msg);
-            }
-
-            DescribeIndexRequest.Builder builder = DescribeIndexRequest.newBuilder()
-                    .setCollectionName(collectionName)
-                    .setIndexName(indexName);
-            DescribeIndexRequest request = builder.build();
-
-            DescribeIndexResponse response = vectorSearchBrpc().describe_index(request);
-
-            if (response.getStatus().getErrorCode() != ErrorCode.Success) {
-                return R.failed(response.getStatus().getErrorCode(), response.getStatus().getReason());
-            }
-
-            if (response.getIndexDescriptionsList().size() == 0) {
-                return R.failed(R.Status.UnexpectedError, response.getStatus().getReason());
-            }
-            IndexDescription index = response.getIndexDescriptionsList().stream()
-                    .filter(x -> x.getFieldName().equals(fieldName))
-                    .findFirst()
-                    .orElse(response.getIndexDescriptions(0));
-
-            if (index.getState() == IndexState.Finished) {
-                return R.success(true);
-            } else if (index.getState() == IndexState.Failed) {
-                String msg = "Get index state failed: " + index.getState().toString();
-                logError(msg);
-                return R.failed(R.Status.UnexpectedError, msg);
-            }
-
-            try {
-                String msg = "Waiting index, interval: " + waitingInterval + "ms";
-                logDebug(msg);
-                TimeUnit.MILLISECONDS.sleep(waitingInterval);
-            } catch (InterruptedException e) {
-                String msg = "Waiting index thread is interrupted, index process may not be finished";
-                logWarning(msg);
-                return R.failed(R.Status.Success, msg);
-            }
-        }
-    }
-
-    @Override
-    public R<DescribeIndexResponse> describeIndex(@NonNull DescribeIndexParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            DescribeIndexRequest.Builder builder = DescribeIndexRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setIndexName(requestParam.getIndexName());
-            DescribeIndexRequest describeIndexRequest = builder.build();
-
-            DescribeIndexResponse response = vectorSearchBrpc().describe_index(describeIndexRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("DescribeIndexRequest successfully!");
-                return R.success(response);
-            } else {
-                return failedStatus("DescribeIndexRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("DescribeIndexRequest RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("DescribeIndexRequest failed!", e);
             return R.failed(e);
         }
     }
@@ -710,37 +451,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             return R.failed(e);
         } catch (Exception e) {
             logError("QueryRequest failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<MutationResult> delete(@NonNull DeleteParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            DeleteRequest deleteRequest = DeleteRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setPartitionName(requestParam.getPartitionName())
-                    .setExpr(requestParam.getExpr())
-                    .build();
-
-            MutationResult response = vectorSearchBrpc().delete_entity(deleteRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("DeleteRequest successfully! Collection name:{}",
-                        requestParam.getCollectionName());
-                return R.success(response);
-            } else {
-                return failedStatus("DeleteRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("DeleteRequest RPC failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("DeleteRequest failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
             return R.failed(e);
         }

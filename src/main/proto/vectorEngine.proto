@@ -11,20 +11,16 @@ service VectorSearchService {
   rpc has_collection(HasCollectionRequest) returns (BoolResponse) {}
   rpc create_collection(CreateCollectionRequest) returns (Status) {}
   rpc drop_collection(DropCollectionRequest) returns (Status) {}
-  rpc show_collections(ShowCollectionsRequest) returns (ShowCollectionsResponse) {}
   rpc describe_collection(DescribeCollectionRequest) returns (DescribeCollectionResponse) {}
 
   rpc create_partition(CreatePartitionRequest) returns (Status) {}
   rpc drop_partition(DropPartitionRequest) returns (Status) {}
   rpc has_partition(HasPartitionRequest) returns (BoolResponse) {}
-  rpc show_partitions(ShowPartitionsRequest) returns (ShowPartitionsResponse) {}
 
   rpc create_index(CreateIndexRequest) returns (Status) {}
-  rpc describe_index(DescribeIndexRequest) returns (DescribeIndexResponse) {}
   rpc drop_index(DropIndexRequest) returns (Status) {}
 
   rpc insert_entity(InsertRequest) returns (MutationResult) {}
-  rpc delete_entity(DeleteRequest) returns (MutationResult) {}
   rpc search_entity(SearchRequest) returns (SearchResults) {}
   rpc query_entity(QueryRequest) returns (QueryResults) {}
 }
@@ -32,8 +28,6 @@ service VectorSearchService {
 message HasCollectionRequest {
   // The collection name you want to check.
   string collection_name = 1;
-  // If time_stamp is not zero, will return true when time_stamp >= created collection timestamp, otherwise will return false.
-  uint64 time_stamp = 2;
 }
 
 message BoolResponse {
@@ -49,9 +43,8 @@ message CreateCollectionRequest {
   string collection_name = 1;
   // The serialized `CollectionSchema`(Required)
   CollectionSchema schema = 2;
-  int32 shards_num = 3;
-  repeated KeyValuePair properties = 4;
-  int64 num_partitions = 5; // num of default physical partitions, only used in partition key mode and changes are not supported
+  repeated KeyValuePair properties = 3;
+  int64 num_partitions = 4; // num of default physical partitions, only used in partition key mode and changes are not supported
 }
 
 /**
@@ -60,8 +53,7 @@ message CreateCollectionRequest {
 message CollectionSchema {
   string name = 1;
   string description = 2;
-  bool autoID = 3;
-  repeated FieldSchema fields = 4;
+  repeated FieldSchema fields = 3;
 }
 
 message DropCollectionRequest {
@@ -69,47 +61,9 @@ message DropCollectionRequest {
   string collection_name = 1;
 }
 
-message ShowCollectionsRequest {
-  uint64 time_stamp = 1;
-  // Decide return Loaded collections or All collections(Optional)
-  ShowType type = 2;
-  // When type is InMemory, will return these collection's inMemory_percentages.(Optional)
-  // Deprecated: use GetLoadingProgress rpc instead
-  repeated string collection_names = 3;
-}
-
-enum ShowType {
-  // Will return all collections
-  All = 0;
-  // Will return loaded collections with their inMemory_percentages
-  InMemory = 1;
-}
-
-message ShowCollectionsResponse {
-  // Contain error_code and reason
-  Status status = 1;
-  // Collection name array
-  repeated string collection_names = 2;
-  // Collection Id array
-  repeated int64 collection_ids = 3;
-  // Hybrid timestamps in vector search engine
-  repeated uint64 created_timestamps = 4;
-  // The utc timestamp calculated by created_timestamp
-  repeated uint64 created_utc_timestamps = 5;
-  // Load percentage on querynode when type is InMemory
-  // Deprecated: use GetLoadingProgress rpc instead
-  repeated int64 inMemory_percentages = 6;
-  // Indicate whether query service is available
-  repeated bool query_service_available = 7;
-}
-
 message DescribeCollectionRequest {
   // The collection name you want to describe, you can pass collection_name or collectionID
   string collection_name = 1;
-  // The collection ID you want to describe
-  int64 collectionID = 2;
-  // If time_stamp is not zero, will describe collection success when time_stamp >= created collection timestamp, otherwise will throw error.
-  uint64 time_stamp = 3;
 }
 
 /**
@@ -124,21 +78,10 @@ message DescribeCollectionResponse {
   int64 collectionID = 3;
   // Hybrid timestamp in vector search engine
   uint64 created_timestamp = 4;
-  // The utc timestamp calculated by created_timestamp
-  uint64 created_utc_timestamp = 5;
-  // The shards number you set.
-  int32 shards_num = 6;
-  // The message ID/posititon when collection is created
-  repeated KeyDataPair start_positions = 7;
   // The collection name
-  string collection_name = 8;
-  repeated KeyValuePair properties = 9;
-  int64 num_partitions = 10;
-}
-
-message KeyDataPair {
-  string key = 1;
-  bytes data = 2;
+  string collection_name = 5;
+  repeated KeyValuePair properties = 6;
+  int64 num_partitions = 7;
 }
 
 message CreatePartitionRequest {
@@ -168,38 +111,6 @@ message HasPartitionRequest {
   string partition_name = 2;
 }
 
-message ShowPartitionsRequest {
-  // The collection name you want to describe, you can pass collection_name or collectionID
-  string collection_name = 1;
-  // The collection id in vector search engine
-  int64 collectionID = 2;
-  // When type is InMemory, will return these patitions's inMemory_percentages.(Optional)
-  repeated string partition_names = 3;
-  // Decide return Loaded partitions or All partitions(Optional)
-  // Deprecated: use GetLoadingProgress rpc instead
-  ShowType type = 6;
-}
-
-/*
-* List all partitions for particular collection response.
-* The returned datas are all rows, we can format to columns by therir index.
-*/
-message ShowPartitionsResponse {
-  // Contain error_code and reason
-  Status status = 1;
-  // All partition names for this collection
-  repeated string partition_names = 2;
-  // All partition ids for this collection
-  repeated int64 partitionIDs = 3;
-  // All hybrid timestamps
-  repeated uint64 created_timestamps = 4;
-  // All utc timestamps calculated by created_timestamps
-  repeated uint64 created_utc_timestamps = 5;
-  // Load percentage on querynode
-  // Deprecated: use GetLoadingProgress rpc instead
-  repeated int64 inMemory_percentages = 6;
-}
-
 message CreateIndexRequest {
   // The particular collection name you want to create index.
   string collection_name = 1;
@@ -209,55 +120,6 @@ message CreateIndexRequest {
   repeated KeyValuePair extra_params = 3;
   // Version before 2.0.2 doesn't contain index_name, we use default index name.
   string index_name = 4;
-}
-
-message DescribeIndexRequest {
-  // The particular collection name in vector search engine
-  string collection_name = 1;
-  // The vector field name in this particular collection
-  string field_name = 2;
-  string index_name = 3;
-  uint64 timestamp = 4;
-}
-
-/*
-* Index informations
-*/
-message IndexDescription {
-  // Index name
-  string index_name = 1;
-  // Index id
-  int64 indexID = 2;
-  // Will return index_type, metric_type, params(like nlist).
-  repeated KeyValuePair params = 3;
-  // The vector field name
-  string field_name = 4;
-  // index build progress
-  int64 indexed_rows = 5;
-  int64 total_rows = 6;
-  // index state
-  IndexState state = 7;
-  string index_state_fail_reason = 8;
-  int64 pending_index_rows = 9;
-}
-
-enum IndexState {
-  IndexStateNone = 0;
-  Unissued = 1;
-  InProgress = 2;
-  Finished = 3;
-  Failed = 4;
-  Retry = 5;
-}
-
-/*
-* Describe index response
-*/
-message DescribeIndexResponse {
-  // Response status
-  Status status = 1;
-  // All index informations, for now only return tha latest index you created for the collection.
-  repeated IndexDescription index_descriptions = 2;
 }
 
 message DropIndexRequest {
@@ -293,13 +155,6 @@ message MutationResult {
   int64 delete_cnt = 7;
   int64 upsert_cnt = 8;
   uint64 timestamp = 9;
-}
-
-message DeleteRequest {
-  string collection_name = 1;
-  string partition_name = 2;
-  string expr = 3;
-  repeated uint32 hash_keys = 4;
 }
 
 message SearchRequest {
@@ -382,8 +237,6 @@ message ArrayArray {
   DataType element_type = 2;
 }
 
-message JSONArray { repeated bytes data = 1; }
-
 message ValueField {
   oneof data {
     bool bool_data = 1;
@@ -392,7 +245,6 @@ message ValueField {
     float float_data = 4;
     double double_data = 5;
     string string_data = 6;
-    bytes bytes_data = 7;
   }
 }
 
@@ -415,9 +267,7 @@ message ScalarField {
     FloatArray float_data = 4;
     DoubleArray double_data = 5;
     StringArray string_data = 6;
-    BytesArray bytes_data = 7;
-    ArrayArray array_data = 8;
-    JSONArray json_data = 9;
+    ArrayArray array_data = 7;
   }
 }
 
@@ -425,8 +275,6 @@ message VectorField {
   int64 dim = 1;
   oneof data {
     FloatArray float_vector = 2;
-    bytes binary_vector = 3;
-    bytes float16_vector = 4;
   }
 }
 
@@ -436,18 +284,14 @@ message VectorField {
 message FieldSchema {
   int64 fieldID = 1;
   string name = 2;
-  bool is_primary_key = 3;
   string description = 4;
   DataType data_type = 5;
   repeated KeyValuePair type_params = 6;
   repeated KeyValuePair index_params = 7;
-  bool autoID = 8;
   FieldState state = 9; // To keep compatible with older version, the default
   // state is `Created`.
   DataType element_type = 10; // For array type, the element type is stored here
-  ValueField default_value = 11; // default_value only support scalars except array and json for now
-  bool is_dynamic = 12; // mark whether this field is the dynamic field
-  bool is_partition_key = 13; // enable logic partitions
+  ValueField default_value = 11;
   ModelType model_type = 14;
 }
 

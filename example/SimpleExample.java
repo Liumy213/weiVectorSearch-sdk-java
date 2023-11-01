@@ -86,12 +86,6 @@ public class SimpleExample {
                 .build();
         client.createIndex(createIndexParam);
 
-        // Call loadCollection() to enable automatically loading data into memory for searching
-        LoadCollectionParam loadCollectionParam = LoadCollectionParam.newBuilder()
-                .withCollectionName(collectionName)
-                .build();
-        client.loadCollection(loadCollectionParam);
-
         // Insert 1 text into the collection
         List<Long> idList = new ArrayList<>();
         idList.add(1234567890L);
@@ -129,19 +123,6 @@ public class SimpleExample {
                 System.out.println("score: " + scoreList.get(i).getScore());
             }
         }
-
-        // Delete entity
-        DeleteParam deleteParam = DeleteParam.newBuilder()
-                .withCollectionName(collectionName)
-                .withPartitionName(partitionName)
-                .withExpr("id in [1234567890]")
-                .build();
-        client.delete(deleteParam);
-
-        // release collection
-        ReleaseCollectionParam releaseCollectionParam = ReleaseCollectionParam.newBuilder()
-                .withCollectionName(collectionName).build();
-        client.releaseCollection(releaseCollectionParam);
 
         // drop index
         DropIndexParam dropIndexParam = DropIndexParam.newBuilder()

@@ -4,7 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.response.basic.RowRecordWrapper;
 import io.github.liumy213.rpc.FieldData;
-import io.github.liumy213.rpc.QueryResults;
+import io.github.liumy213.rpc.QueryResponse;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -17,9 +17,9 @@ import java.util.Map;
  * Utility class to wrap response of <code>query</code> interface.
  */
 public class QueryResultsWrapper extends RowRecordWrapper {
-    private final QueryResults results;
+    private final QueryResponse results;
 
-    public QueryResultsWrapper(@NonNull QueryResults results) {
+    public QueryResultsWrapper(@NonNull QueryResponse results) {
         this.results = results;
     }
 

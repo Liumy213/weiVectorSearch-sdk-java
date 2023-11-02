@@ -127,17 +127,17 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<MutationResult> insert(InsertParam requestParam) {
+    public R<InsertResponse> insert(InsertParam requestParam) {
         return retry(()-> super.insert(requestParam));
     }
 
     @Override
-    public R<SearchResults> search(SearchParam requestParam) {
+    public R<SearchResponse> search(SearchParam requestParam) {
         return retry(()-> super.search(requestParam));
     }
 
     @Override
-    public R<QueryResults> query(QueryParam requestParam) {
+    public R<QueryResponse> query(QueryParam requestParam) {
         return retry(()-> super.query(requestParam));
     }
 

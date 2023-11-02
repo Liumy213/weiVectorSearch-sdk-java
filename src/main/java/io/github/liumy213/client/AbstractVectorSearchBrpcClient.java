@@ -49,12 +49,12 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             HasCollectionRequest hasCollectionRequest = builder
                     .build();
 
-            BoolResponse response = vectorSearchBrpc().has_collection(hasCollectionRequest);
+            HasCollectionResponse response = vectorSearchBrpc().has_collection(hasCollectionRequest);
 
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("HasCollectionRequest successfully!");
                 Boolean value = Optional.of(response)
-                        .map(BoolResponse::getValue)
+                        .map(HasCollectionResponse::getValue)
                         .orElse(false);
                 return R.success(value);
             } else {
@@ -239,7 +239,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
                     .setPartitionName(requestParam.getPartitionName())
                     .build();
 
-            BoolResponse response = vectorSearchBrpc().has_partition(hasPartitionRequest);
+            HasPartitionResponse response = vectorSearchBrpc().has_partition(hasPartitionRequest);
 
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("HasPartitionRequest successfully!");
@@ -362,7 +362,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
     }
 
     @Override
-    public R<MutationResult> insert(@NonNull InsertParam requestParam) {
+    public R<InsertResponse> insert(@NonNull InsertParam requestParam) {
         logInfo(requestParam.toString());
 
         try {
@@ -377,7 +377,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
 
             DescCollResponseWrapper wrapper = new DescCollResponseWrapper(descResp.getData());
             ParamUtils.InsertBuilderWrapper builderWraper = new ParamUtils.InsertBuilderWrapper(requestParam, wrapper);
-            MutationResult response = vectorSearchBrpc().insert_entity(builderWraper.buildInsertRequest());
+            InsertResponse response = vectorSearchBrpc().insert_entity(builderWraper.buildInsertRequest());
 
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("InsertRequest successfully! Collection name:{}",
@@ -398,12 +398,12 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
     }
 
     @Override
-    public R<SearchResults> search(@NonNull SearchParam requestParam) {
+    public R<SearchResponse> search(@NonNull SearchParam requestParam) {
         logInfo(requestParam.toString());
 
         try {
             SearchRequest searchRequest = ParamUtils.convertSearchParam(requestParam);
-            SearchResults response = vectorSearchBrpc().search_entity(searchRequest);
+            SearchResponse response = vectorSearchBrpc().search_entity(searchRequest);
 
             //TODO: truncate distance value by round decimal
 
@@ -425,12 +425,12 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
     }
 
     @Override
-    public R<QueryResults> query(@NonNull QueryParam requestParam) {
+    public R<QueryResponse> query(@NonNull QueryParam requestParam) {
         logInfo(requestParam.toString());
 
         try {
             QueryRequest queryRequest = ParamUtils.convertQueryParam(requestParam);
-            QueryResults response = this.vectorSearchBrpc().query_entity(queryRequest);
+            QueryResponse response = this.vectorSearchBrpc().query_entity(queryRequest);
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("QueryRequest successfully!");
                 return R.success(response);

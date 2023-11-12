@@ -176,7 +176,7 @@ public class ParamUtils {
      * @return boolean type
      */
     public static boolean IsVectorIndex(IndexType idx) {
-        return idx != IndexType.INVALID && idx.getCode() <= IndexType.DISKANN.getCode();
+        return idx != IndexType.INVALID && idx.getCode() <= IndexType.FLAT.getCode();
     }
 
     /**
@@ -237,24 +237,6 @@ public class ParamUtils {
         }
 
         private void fillFieldsData(InsertParam requestParam, DescCollResponseWrapper wrapper) {
-            // set partition name only when there is no partition key field
-            String partitionName = requestParam.getPartitionName();
-            boolean isPartitionKeyEnabled = false;
-            for (FieldType fieldType : wrapper.getFields()) {
-                if (fieldType.isPartitionKey()) {
-                    isPartitionKeyEnabled = true;
-                    break;
-                }
-            }
-            if (isPartitionKeyEnabled) {
-                if (partitionName != null && !partitionName.isEmpty()) {
-                    String msg = "Collection " + requestParam.getCollectionName() + " has partition key, not allow to specify partition name";
-                    throw new ParamException(msg);
-                }
-            } else if (partitionName != null) {
-                this.setPartitionName(partitionName);
-            }
-
             // convert insert data
             List<InsertParam.Field> columnFields = requestParam.getFields();
 
@@ -270,10 +252,6 @@ public class ParamUtils {
                 boolean found = false;
                 for (InsertParam.Field field : fields) {
                     if (field.getName().equals(fieldType.getName())) {
-                        if (fieldType.isAutoID()) {
-                            String msg = "The primary key: " + fieldType.getName() + " is auto generated, no need to input.";
-                            throw new ParamException(msg);
-                        }
                         checkFieldData(fieldType, field);
 
                         found = true;
@@ -282,7 +260,7 @@ public class ParamUtils {
                     }
 
                 }
-                if (!found && !fieldType.isAutoID()) {
+                if (!found) {
                     String msg = "The field: " + fieldType.getName() + " is not provided.";
                     throw new ParamException(msg);
                 }
@@ -314,45 +292,13 @@ public class ParamUtils {
 
         // prepare target vectors
         // TODO: check target vector dimension(use DescribeCollection get schema to compare)
-        PlaceholderType plType = PlaceholderType.None;
         List<?> vectors = requestParam.getVectors();
         if (vectors != null && vectors.size() > 0) {
-            List<ByteString> byteStrings = new ArrayList<>();
             for (Object vector : vectors) {
-                if (vector instanceof List) {
-                    plType = PlaceholderType.FloatVector;
-                    List<Float> list = (List<Float>) vector;
-                    ByteBuffer buf = ByteBuffer.allocate(Float.BYTES * list.size());
-                    buf.order(ByteOrder.LITTLE_ENDIAN);
-                    list.forEach(buf::putFloat);
-
-                    byte[] array = buf.array();
-                    ByteString bs = ByteString.copyFrom(array);
-                    byteStrings.add(bs);
-                } else if (vector instanceof ByteBuffer) {
-                    plType = PlaceholderType.BinaryVector;
-                    ByteBuffer buf = (ByteBuffer) vector;
-                    byte[] array = buf.array();
-                    ByteString bs = ByteString.copyFrom(array);
-                    byteStrings.add(bs);
-                } else {
-                    String msg = "Search target vector type is illegal(Only allow List<Float> or ByteBuffer)";
-                    throw new ParamException(msg);
-                }
+                List<Float> list = (List<Float>) vector;
+                FloatArray floatArray = FloatArray.newBuilder().addAllData(list).build();
+                builder.addFloatVector(floatArray);
             }
-
-            PlaceholderValue.Builder pldBuilder = PlaceholderValue.newBuilder()
-                    .setTag(Constant.VECTOR_TAG)
-                    .setType(plType);
-            byteStrings.forEach(pldBuilder::addValues);
-
-            PlaceholderValue plv = pldBuilder.build();
-            PlaceholderGroup placeholderGroup = PlaceholderGroup.newBuilder()
-                    .addPlaceholders(plv)
-                    .build();
-
-            ByteString byteStr = placeholderGroup.toByteString();
-            builder.setPlaceholderGroup(byteStr);
         }
         List<String> texts = requestParam.getTexts();
         if (texts != null && texts.size() > 0) {

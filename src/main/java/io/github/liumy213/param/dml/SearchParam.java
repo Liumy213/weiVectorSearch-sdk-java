@@ -48,9 +48,6 @@ public class SearchParam {
     private final List<String> texts;
     private final Long NQ;
     private final String params;
-    private final long travelTimestamp;
-    private final long guaranteeTimestamp;
-    private final Long gracefulTime;
 
     private SearchParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
@@ -65,9 +62,6 @@ public class SearchParam {
         this.texts = builder.texts;
         this.NQ = builder.NQ;
         this.params = builder.params;
-        this.travelTimestamp = builder.travelTimestamp;
-        this.guaranteeTimestamp = builder.guaranteeTimestamp;
-        this.gracefulTime = builder.gracefulTime;
     }
 
     public static Builder newBuilder() {
@@ -90,10 +84,6 @@ public class SearchParam {
         private List<String> texts;
         private Long NQ;
         private String params = "{}";
-        private Long travelTimestamp = 0L;
-        private Long guaranteeTimestamp = Constant.GUARANTEE_EVENTUALLY_TS;
-        private Long gracefulTime = 5000L;
-        private Boolean ignoreGrowing = Boolean.FALSE;
 
        Builder() {
         }
@@ -252,18 +242,6 @@ public class SearchParam {
         }
 
         /**
-         * Ignore the growing segments to get best search performance. Default is False.
-         * For the user case that don't require data visibility.
-         *
-         * @param ignoreGrowing <code>Boolean.TRUE</code> ignore, Boolean.FALSE is not
-         * @return <code>Builder</code>
-         */
-        public Builder withIgnoreGrowing(@NonNull Boolean ignoreGrowing) {
-            this.ignoreGrowing = ignoreGrowing;
-            return this;
-        }
-
-        /**
          * Verifies parameters and creates a new {@link SearchParam} instance.
          *
          * @return {@link SearchParam}
@@ -279,14 +257,6 @@ public class SearchParam {
 
             if (topK <= 0) {
                 throw new ParamException("TopK value is illegal");
-            }
-
-            if (travelTimestamp < 0) {
-                throw new ParamException("The travel timestamp must be greater than 0");
-            }
-
-            if (guaranteeTimestamp < 0) {
-                throw new ParamException("The guarantee timestamp must be greater than 0");
             }
 
             if (metricType == MetricType.INVALID) {
@@ -333,7 +303,7 @@ public class SearchParam {
                         throw new ParamException("Target vector is binary but metric type is incorrect");
                     }
                 } else {
-                    throw new ParamException("Target vector type must be List<Float> or ByteBuffer");
+                    throw new ParamException("Target vector type must be List<Float>");
                 }
             }
 

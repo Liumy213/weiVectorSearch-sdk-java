@@ -13,23 +13,6 @@ public abstract class RowRecordWrapper {
     public abstract List<QueryResultsWrapper.RowRecord> getRowRecords();
 
     /**
-     * Get the dynamic field. Only available when a collection's dynamic field is enabled.
-     * Throws {@link ParamException} if the dynamic field doesn't exist.
-     *
-     * @return {@link FieldDataWrapper}
-     */
-    public FieldDataWrapper getDynamicWrapper() throws ParamException {
-        List<FieldData> fields = getFieldDataList();
-        for (FieldData field : fields) {
-            if (field.getIsDynamic()) {
-                return new FieldDataWrapper(field);
-            }
-        }
-
-        throw new ParamException("The dynamic field doesn't exist");
-    }
-
-    /**
      * Gets a row record from result.
      *  Throws {@link ParamException} if the index is illegal.
      *

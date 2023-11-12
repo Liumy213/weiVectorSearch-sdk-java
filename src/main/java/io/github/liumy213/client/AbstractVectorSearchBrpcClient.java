@@ -87,9 +87,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             CreateCollectionRequest.Builder builder = CreateCollectionRequest.newBuilder()
                     .setCollectionName(requestParam.getCollectionName())
                     .setSchema(collectionSchemaBuilder.build().toBuilder());
-            if (requestParam.getPartitionsNum() > 0) {
-                builder.setNumPartitions(requestParam.getPartitionsNum());
-            }
 
             CreateCollectionRequest createCollectionRequest = builder.build();
 
@@ -338,6 +335,7 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
         try {
             DropIndexRequest dropIndexRequest = DropIndexRequest.newBuilder()
                     .setCollectionName(requestParam.getCollectionName())
+                    .setFieldName(requestParam.getFieldName())
                     .setIndexName(requestParam.getIndexName())
                     .build();
 

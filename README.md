@@ -11,7 +11,7 @@ You can use Apache Maven to download the SDK.
 <dependency>
     <groupId>io.github.liumy213</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>
-    <version>0.0.8</version>
+    <version>0.0.9</version>
 </dependency>
 ```
 
@@ -75,7 +75,7 @@ The service creates indexes with different parameters
 CreateIndexParam createIndexParam = CreateIndexParam.newBuilder()
         .withCollectionName(collectionName)
         .withFieldName(textFieldName)
-        .withIndexType(IndexType.IVF_FLAT)
+        .withIndexType(IndexType.FLAT)
         .withMetricType(MetricType.L2)
         .build();
 vectorSearchServiceClient.createIndex(createIndexParam);
@@ -114,4 +114,14 @@ SearchParam textSearchParam = SearchParam.newBuilder()
         .addOutField(idFieldName)
         .build();
 R<SearchResults> textSearchRet = vectorSearchServiceClient.search(textSearchParam);
+SearchResultsWrapper wrapperSearch = new SearchResultsWrapper(textSearchRet.getData().getResults());
+for (int k = 0; k < searchText.size(); k++) {
+    List<?> searchMidList = wrapperSearch.getFieldData(idFieldName, k);
+    List<SearchResultsWrapper.IDScore> scoreList = wrapperSearch.getIDScore(k);
+    int resultSize = searchMidList.size();
+    for (int i = 0; i < resultSize; i++) {
+        System.out.println("id: " + searchIdList.get(i));
+        System.out.println("score: " + scoreList.get(i).getScore());
+    }
+}
 ```

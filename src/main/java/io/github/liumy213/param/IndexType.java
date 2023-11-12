@@ -29,10 +29,10 @@ public enum IndexType {
     INVALID,
     //Only supported for float vectors
     FLAT(1),
-    IVF_FLAT(2),
-    IVF_PQ(3),
-    HNSW(4),
-    DISKANN(5),
+//    IVF_FLAT(2),
+//    IVF_PQ(3),
+//    HNSW(4),
+//    DISKANN(5),
     ;
 
     @Getter

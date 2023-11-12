@@ -36,17 +36,13 @@ import java.util.List;
 @ToString
 public class CreateCollectionParam {
     private final String collectionName;
-    private final int shardsNum;
     private final String description;
     private final List<FieldType> fieldTypes;
-    private final int partitionsNum;
 
     private CreateCollectionParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
-        this.shardsNum = builder.shardsNum;
         this.description = builder.description;
         this.fieldTypes = builder.fieldTypes;
-        this.partitionsNum = builder.partitionsNum;
     }
 
     public static Builder newBuilder() {
@@ -58,10 +54,8 @@ public class CreateCollectionParam {
      */
     public static final class Builder {
         private String collectionName;
-        private int shardsNum = 0; // default to 0, let server decide the value
         private String description = "";
         private final List<FieldType> fieldTypes = new ArrayList<>();
-        private int partitionsNum = 0;
         private Builder() {
         }
 
@@ -73,19 +67,6 @@ public class CreateCollectionParam {
          */
         public Builder withCollectionName(@NonNull String collectionName) {
             this.collectionName = collectionName;
-            return this;
-        }
-
-        /**
-         * Sets the shards number. The number must be greater or equal to zero.
-         * The default value is 0, which means letting the server decide the value.
-         * The server set this value to 1 if user didn't specify it.
-         *
-         * @param shardsNum shards number to distribute insert data into multiple data nodes and query nodes.
-         * @return <code>Builder</code>
-         */
-        public Builder withShardsNum(int shardsNum) {
-            this.shardsNum = shardsNum;
             return this;
         }
 
@@ -125,20 +106,6 @@ public class CreateCollectionParam {
         }
 
         /**
-         * Sets the partitions number if there is partition key field. The number must be greater than zero.
-         * The default value is 64(defined in server side). The upper limit is 4096(defined in server side).
-         * Not allow to set this value if none of field is partition key.
-         * Only one partition key field is allowed in a collection.
-         *
-         * @param partitionsNum partitions number
-         * @return <code>Builder</code>
-         */
-        public Builder withPartitionsNum(int partitionsNum) {
-            this.partitionsNum = partitionsNum;
-            return this;
-        }
-
-        /**
          * Verifies parameters and creates a new {@link CreateCollectionParam} instance.
          *
          * @return {@link CreateCollectionParam}
@@ -146,15 +113,10 @@ public class CreateCollectionParam {
         public CreateCollectionParam build() throws ParamException {
             ParamUtils.CheckNullEmptyString(collectionName, "Collection name");
 
-            if (shardsNum < 0) {
-                throw new ParamException("ShardNum must be larger or equal to 0");
-            }
-
             if (fieldTypes.isEmpty()) {
                 throw new ParamException("Field numbers must be larger than 0");
             }
 
-            boolean hasPartitionKey = false;
             boolean hasVectorField = false;
             boolean hasStringField = false;
             for (FieldType fieldType : fieldTypes) {
@@ -172,19 +134,6 @@ public class CreateCollectionParam {
 
                 if (hasStringField && hasVectorField) {
                     throw new ParamException("FloatVector and String field can not be same time to create, only one field is allowed in a collection");
-                }
-
-                if (fieldType.isPartitionKey()) {
-                    if (hasPartitionKey) {
-                        throw new ParamException("Only one partition key field is allowed in a collection");
-                    }
-                    hasPartitionKey = true;
-                }
-            }
-
-            if (partitionsNum > 0) {
-                if (!hasPartitionKey) {
-                    throw new ParamException("None of fields is partition key, not allow to define partition number");
                 }
             }
 

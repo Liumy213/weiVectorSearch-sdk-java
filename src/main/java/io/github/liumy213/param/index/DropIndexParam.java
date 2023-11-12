@@ -32,10 +32,12 @@ import org.apache.commons.lang3.StringUtils;
 @Getter
 public class DropIndexParam {
     private final String collectionName;
+    private final String fieldName;
     private final String indexName;
 
     private DropIndexParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
+        this.fieldName = builder.fieldName;
         this.indexName = builder.indexName;
     }
 
@@ -48,6 +50,7 @@ public class DropIndexParam {
      */
     public static final class Builder {
         private String collectionName;
+        private String fieldName;
         private String indexName = Constant.DEFAULT_INDEX_NAME;
 
         private Builder() {
@@ -61,6 +64,17 @@ public class DropIndexParam {
          */
         public Builder withCollectionName(@NonNull String collectionName) {
             this.collectionName = collectionName;
+            return this;
+        }
+
+        /**
+         * Sets the field name. Field name cannot be empty or null.
+         *
+         * @param fieldName collection name
+         * @return <code>Builder</code>
+         */
+        public Builder withFieldName(@NonNull String fieldName) {
+            this.fieldName = fieldName;
             return this;
         }
 
@@ -83,6 +97,7 @@ public class DropIndexParam {
          */
         public DropIndexParam build() throws ParamException {
             ParamUtils.CheckNullEmptyString(collectionName, "Collection name");
+            ParamUtils.CheckNullEmptyString(fieldName, "Field name");
 
             if (indexName == null || StringUtils.isBlank(indexName)) {
                 indexName = Constant.DEFAULT_INDEX_NAME;
@@ -101,6 +116,7 @@ public class DropIndexParam {
     public String toString() {
         return "DropIndexParam{" +
                 "collectionName='" + collectionName + '\'' +
+                "fieldName=" + fieldName + '\'' +
                 ", indexName='" + indexName + '\'' +
                 '}';
     }

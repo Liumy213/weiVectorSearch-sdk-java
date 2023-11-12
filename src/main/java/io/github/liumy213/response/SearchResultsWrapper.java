@@ -132,27 +132,13 @@ public class SearchResultsWrapper extends RowRecordWrapper {
         List<IDScore> idScores = new ArrayList<>();
 
         // set id and distance
-        IDs ids = results.getIds();
-        if (ids.hasIntId()) {
-            LongArray longIDs = ids.getIntId();
-            if (offset + k > longIDs.getDataCount()) {
-                throw new IllegalResponseException("Result ids count is wrong");
-            }
+        LongArray longIDs = results.getIds();
+        if (offset + k > longIDs.getDataCount()) {
+            throw new IllegalResponseException("Result ids count is wrong");
+        }
 
-            for (int n = 0; n < k; ++n) {
-                idScores.add(new IDScore("", longIDs.getData((int)offset + n), results.getScores((int)offset + n)));
-            }
-        } else if (ids.hasStrId()) {
-            StringArray strIDs = ids.getStrId();
-            if (offset + k > strIDs.getDataCount()) {
-                throw new IllegalResponseException("Result ids count is wrong");
-            }
-
-            for (int n = 0; n < k; ++n) {
-                idScores.add(new IDScore(strIDs.getData((int)offset + n), 0, results.getScores((int)offset + n)));
-            }
-        } else {
-            throw new IllegalResponseException("Result ids is illegal");
+        for (int n = 0; n < k; ++n) {
+            idScores.add(new IDScore("", longIDs.getData((int)offset + n), results.getScores((int)offset + n)));
         }
 
         // set output fields
@@ -164,11 +150,7 @@ public class SearchResultsWrapper extends RowRecordWrapper {
 
         for (String outputKey : outputFields) {
             boolean isField = false;
-            FieldDataWrapper dynamicField = null;
             for (FieldData field : fields) {
-                if (field.getIsDynamic()) {
-                    dynamicField = new FieldDataWrapper(field);
-                }
                 if (outputKey.equals(field.getFieldName())) {
                     FieldDataWrapper wrapper = new FieldDataWrapper(field);
                     for (int n = 0; n < k; ++n) {

@@ -36,23 +36,17 @@ import java.util.Map;
 @Getter
 public class FieldType {
     private final String name;
-    private final boolean primaryKey;
     private final String description;
     private final DataType dataType;
     private final ModelType modelType;
     private final Map<String,String> typeParams;
-    private final boolean autoID;
-    private final boolean partitionKey;
 
     private FieldType(@NonNull Builder builder){
         this.name = builder.name;
-        this.primaryKey = builder.primaryKey;
         this.description = builder.description;
         this.dataType = builder.dataType;
         this.modelType = builder.modelType;
         this.typeParams = builder.typeParams;
-        this.autoID = builder.autoID;
-        this.partitionKey = builder.partitionKey;
     }
 
     public int getDimension() {
@@ -80,31 +74,16 @@ public class FieldType {
      */
     public static final class Builder {
         private String name;
-        private boolean primaryKey = false;
         private String description = "";
         private DataType dataType;
         private ModelType modelType;
         private final Map<String,String> typeParams = new HashMap<>();
-        private boolean autoID = false;
-        private boolean partitionKey = false;
 
         private Builder() {
         }
 
         public Builder withName(@NonNull String name) {
             this.name = name;
-            return this;
-        }
-
-        /**
-         * Sets the field as the primary key field.
-         * Note that the current release of vector search engine only support <code>Long</code> data type as primary key.
-         *
-         * @param primaryKey true is primary key, false is not
-         * @return <code>Builder</code>
-         */
-        public Builder withPrimaryKey(boolean primaryKey) {
-            this.primaryKey = primaryKey;
             return this;
         }
 
@@ -187,35 +166,6 @@ public class FieldType {
         }
 
         /**
-         * Enables auto-id function for the field. Note that the auto-id function can only be enabled on primary key field.
-         * If auto-id function is enabled, vector search engine will automatically generate unique ID for each entity,
-         * thus you do not need to provide values for the primary key field when inserting.
-         *
-         * If auto-id is disabled, you need to provide values for the primary key field when inserting.
-         *
-         * @param autoID true enable auto-id, false disable auto-id
-         * @return <code>Builder</code>
-         */
-        public Builder withAutoID(boolean autoID) {
-            this.autoID = autoID;
-            return this;
-        }
-
-        /**
-         * Sets the field to be partition key.
-         * A partition key field's values are hashed and distributed to different logic partitions.
-         * Only int64 and varchar type field can be partition key.
-         * Primary key field cannot be partition key.
-         *
-         * @param partitionKey true is partition key, false is not
-         * @return <code>Builder</code>
-         */
-        public Builder withPartitionKey(boolean partitionKey) {
-            this.partitionKey = partitionKey;
-            return this;
-        }
-
-        /**
          * Verifies parameters and creates a new {@link FieldType} instance.
          *
          * @return {@link FieldType}
@@ -270,17 +220,6 @@ public class FieldType {
                 }
             }
 
-            // verify partition key
-            if (partitionKey) {
-                if (primaryKey) {
-                    throw new ParamException("Primary key field can not be partition key");
-                }
-                if (dataType != DataType.Int64) {
-                    throw new ParamException("Only Int64 and Varchar type field can be partition key");
-                }
-            }
-
-
             return new FieldType(this);
         }
     }
@@ -295,9 +234,6 @@ public class FieldType {
         return "FieldType{" +
                 "name='" + name + '\'' +
                 ", type='" + dataType.name() + '\'' +
-                ", primaryKey=" + primaryKey +
-                ", partitionKey=" + partitionKey +
-                ", autoID=" + autoID +
                 ", params=" + typeParams +
                 '}';
     }

@@ -125,3 +125,19 @@ for (int k = 0; k < searchText.size(); k++) {
     }
 }
 ```
+
+### Drop index
+Delete the index created under collection
+```java
+DropIndexParam dropIndexParam = DropIndexParam.newBuilder()
+        .withCollectionName(collectionName).build();
+client.dropIndex(dropIndexParam);
+```
+
+### Drop index
+Deleting a collection will delete the index that was created and all the data
+```java
+DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()
+                .withCollectionName(collectionName).build();
+        client.dropCollection(dropCollectionParam);
+```

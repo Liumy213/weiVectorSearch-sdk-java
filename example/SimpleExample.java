@@ -114,7 +114,7 @@ public class SimpleExample {
 
         // droop collection
         DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()
-                .withCollectionName(collectionName1).build();
+                .withCollectionName(collectionName).build();
         client.dropCollection(dropCollectionParam);
     }
 }

@@ -1,29 +1,20 @@
-package com.weibo.weivectorsearch.example;
+package io.github.liumy213.example;
 
-import com.alibaba.fastjson.JSONObject;
-import com.weibo.weivectorsearch.client.VectorSearchServiceClient;
-import com.weibo.weivectorsearch.param.ConnectParam;
-import com.weibo.weivectorsearch.param.IndexType;
-import com.weibo.weivectorsearch.param.MetricType;
-import com.weibo.weivectorsearch.param.R;
-import com.weibo.weivectorsearch.param.collection.CreateCollectionParam;
-import com.weibo.weivectorsearch.param.collection.FieldType;
-import com.weibo.weivectorsearch.param.collection.LoadCollectionParam;
-import com.weibo.weivectorsearch.param.dml.DeleteParam;
-import com.weibo.weivectorsearch.param.dml.InsertParam;
-import com.weibo.weivectorsearch.param.dml.SearchParam;
-import com.weibo.weivectorsearch.param.index.CreateIndexParam;
-import com.weibo.weivectorsearch.param.partition.CreatePartitionParam;
-import com.weibo.weivectorsearch.rpc.DataType;
-import com.weibo.weivectorsearch.rpc.ModelType;
-import com.weibo.weivectorsearch.rpc.SearchResults;
+import io.github.liumy213.client.VectorSearchServiceClient;
+import io.github.liumy213.param.*;
+import io.github.liumy213.param.collection.*;
+import io.github.liumy213.param.dml.InsertParam;
+import io.github.liumy213.param.dml.SearchParam;
+import io.github.liumy213.param.index.CreateIndexParam;
+import io.github.liumy213.param.index.DropIndexParam;
+import io.github.liumy213.param.partition.CreatePartitionParam;
+import io.github.liumy213.response.SearchResultsWrapper;
+import io.github.liumy213.rpc.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
-
-import static com.weibo.weivectorsearch.param.Constant.VECTOR_FIELD;
 
 public class SimpleExample {
     public static void main(String[] args) {
@@ -66,14 +57,6 @@ public class SimpleExample {
                 .addFieldType(textField)
                 .build();
         client.createCollection(createCollectionParam);
-
-        // Create the partition
-        String partitionName = "partition_example";
-        CreatePartitionParam createPartitionParam = CreatePartitionParam.newBuilder()
-                .withCollectionName(collectionName)
-                .withPartitionName(partitionName)
-                .build();
-        client.createPartition(createPartitionParam);
 
         // Create an index type on the vector field or text field.
         String INDEX_PARAM = "{\"nlist\":1024}";
@@ -128,12 +111,6 @@ public class SimpleExample {
         DropIndexParam dropIndexParam = DropIndexParam.newBuilder()
                 .withCollectionName(collectionName).build();
         client.dropIndex(dropIndexParam);
-
-        // drop partition
-        DropPartitionParam dropPartitionParam = DropPartitionParam.newBuilder()
-                .withCollectionName(collectionName)
-                .withPartitionName(partitionName).build();
-        client.dropPartition(dropPartitionParam);
 
         // droop collection
         DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()

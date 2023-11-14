@@ -109,12 +109,17 @@ public class SimpleExample {
 
         // drop index
         DropIndexParam dropIndexParam = DropIndexParam.newBuilder()
-                .withCollectionName(collectionName).build();
+                .withCollectionName(collectionName)
+                .withFieldName(textFieldName)
+                .build();
         client.dropIndex(dropIndexParam);
 
         // droop collection
         DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()
                 .withCollectionName(collectionName).build();
         client.dropCollection(dropCollectionParam);
+
+        // Disconnect from Vector Search Engine
+        client.close();
     }
 }

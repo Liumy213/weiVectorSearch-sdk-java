@@ -81,6 +81,10 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
         return this.vectorSearchBrpc;
     }
 
+    public void close() {
+        brpcClientConfig.releaseClient();
+    }
+
     @Override
     public R<Boolean> hasCollection(HasCollectionParam hasCollectionParam) {
         return retry(()-> super.hasCollection(hasCollectionParam));

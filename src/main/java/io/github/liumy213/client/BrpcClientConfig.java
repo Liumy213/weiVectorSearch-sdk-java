@@ -31,4 +31,8 @@ public class BrpcClientConfig {
         return userService;
     }
 
+    public void releaseClient() {
+        starlightClient.destroy();
+    }
+
 }

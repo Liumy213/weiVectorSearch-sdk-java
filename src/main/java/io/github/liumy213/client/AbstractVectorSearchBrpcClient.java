@@ -8,11 +8,9 @@ import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
 import io.github.liumy213.param.dml.InsertParam;
-import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.index.CreateIndexParam;
 import io.github.liumy213.param.index.DropIndexParam;
-import io.github.liumy213.param.partition.*;
 import io.github.liumy213.response.DescCollResponseWrapper;
 import io.github.liumy213.rpc.*;
 import lombok.NonNull;
@@ -23,11 +21,10 @@ import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.TimeUnit;
 
 public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClient {
     protected static final Logger logger = LoggerFactory.getLogger(AbstractVectorSearchBrpcClient.class);
-    protected LogLevel logLevel = LogLevel.Info;
+    protected LogLevel logLevel = LogLevel.Error;
     protected abstract VectorSearchBrpc vectorSearchBrpc();
 
     private <T> R<T> failedStatus(String requestName, Status status) {
@@ -161,95 +158,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             return R.failed(e);
         } catch (Exception e) {
             logError("DescribeCollectionRequest failed!", e);
-            return R.failed(e);
-        }
-    }
-
-
-    @Override
-    public R<RpcStatus> createPartition(@NonNull CreatePartitionParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            CreatePartitionRequest createPartitionRequest = CreatePartitionRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setPartitionName(requestParam.getPartitionName())
-                    .build();
-
-            Status response = vectorSearchBrpc().create_partition(createPartitionRequest);
-
-            if (response.getErrorCode() == ErrorCode.Success) {
-                logDebug("CreatePartitionRequest successfully! Collection name:{}, partition name:{}",
-                        requestParam.getCollectionName(), requestParam.getPartitionName());
-                return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-            } else {
-                return failedStatus("CreatePartitionRequest", response);
-            }
-        } catch (RpcExecutionException e) {
-            logError("CreatePartitionRequest RPC failed! Collection name:{}, partition name:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("CreatePartitionRequest failed! Collection name:{}, partition name:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<RpcStatus> dropPartition(@NonNull DropPartitionParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            DropPartitionRequest dropPartitionRequest = DropPartitionRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setPartitionName(requestParam.getPartitionName())
-                    .build();
-
-            Status response = vectorSearchBrpc().drop_partition(dropPartitionRequest);
-
-            if (response.getErrorCode() == ErrorCode.Success) {
-                logDebug("DropPartitionRequest successfully! Collection name:{}, partition name:{}",
-                        requestParam.getCollectionName(), requestParam.getPartitionName());
-                return R.success(new RpcStatus(RpcStatus.SUCCESS_MSG));
-            } else {
-                return failedStatus("DropPartitionRequest", response);
-            }
-        } catch (RpcExecutionException e) {
-            logError("DropPartitionRequest RPC failed! Collection name:{}, partition name:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("DropPartitionRequest failed! Collection name:{}, partition name:{}",
-                    requestParam.getCollectionName(), requestParam.getPartitionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<Boolean> hasPartition(@NonNull HasPartitionParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            HasPartitionRequest hasPartitionRequest = HasPartitionRequest.newBuilder()
-                    .setCollectionName(requestParam.getCollectionName())
-                    .setPartitionName(requestParam.getPartitionName())
-                    .build();
-
-            HasPartitionResponse response = vectorSearchBrpc().has_partition(hasPartitionRequest);
-
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("HasPartitionRequest successfully!");
-                Boolean result = response.getValue();
-                return R.success(result);
-            } else {
-                return failedStatus("HasPartitionRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-            logError("HasPartitionRequest RPC failed!", e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("HasPartitionRequest failed!", e);
             return R.failed(e);
         }
     }
@@ -403,8 +311,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             SearchRequest searchRequest = ParamUtils.convertSearchParam(requestParam);
             SearchResponse response = vectorSearchBrpc().search_entity(searchRequest);
 
-            //TODO: truncate distance value by round decimal
-
             if (response.getStatus().getErrorCode() == ErrorCode.Success) {
                 logDebug("SearchRequest successfully!");
                 return R.success(response);
@@ -417,38 +323,6 @@ public abstract class AbstractVectorSearchBrpcClient implements VectorSearchClie
             return R.failed(e);
         } catch (ParamException e) {
             logError("SearchRequest failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        }
-    }
-
-    @Override
-    public R<QueryResponse> query(@NonNull QueryParam requestParam) {
-        logInfo(requestParam.toString());
-
-        try {
-            QueryRequest queryRequest = ParamUtils.convertQueryParam(requestParam);
-            QueryResponse response = this.vectorSearchBrpc().query_entity(queryRequest);
-            if (response.getStatus().getErrorCode() == ErrorCode.Success) {
-                logDebug("QueryRequest successfully!");
-                return R.success(response);
-            } else {
-                // Server side behavior: if a query expression could not filter out any result,
-                // or collection is empty, the server return ErrorCode.EmptyCollection.
-                // Here we give a general message for this case.
-                if (response.getStatus().getErrorCode() == ErrorCode.EmptyCollection) {
-                    logWarning("QueryRequest returns nothing: empty collection or improper expression");
-                    return R.failed(ErrorCode.EmptyCollection, "empty collection or improper expression");
-                }
-                return failedStatus("QueryRequest", response.getStatus());
-            }
-        } catch (RpcExecutionException e) {
-//            e.printStackTrace();
-            logError("QueryRequest RPC failed! Collection name:{}",
-                    requestParam.getCollectionName(), e);
-            return R.failed(e);
-        } catch (Exception e) {
-            logError("QueryRequest failed! Collection name:{}",
                     requestParam.getCollectionName(), e);
             return R.failed(e);
         }

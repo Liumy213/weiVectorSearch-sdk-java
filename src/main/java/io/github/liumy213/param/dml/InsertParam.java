@@ -19,7 +19,6 @@
 
 package io.github.liumy213.param.dml;
 
-import com.alibaba.fastjson.JSONObject;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.ParamUtils;
 import lombok.Getter;
@@ -192,11 +191,6 @@ public class InsertParam {
      * If dataType is Double, values is List of Double;
      * If dataType is Varchar, values is List of String;
      * If dataType is FloatVector, values is List of List Float;
-     * If dataType is BinaryVector, values is List of ByteBuffer;
-     *
-     * Note:
-     * If dataType is Int8/Int16/Int32, values is List of Integer or Short
-     * (why? because the rpc proto only support int32/int64 type, actually Int8/Int16/Int32 use int32 type to encode/decode)
      *
      */
     @lombok.Builder

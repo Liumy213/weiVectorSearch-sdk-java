@@ -23,62 +23,14 @@ package io.github.liumy213.param;
  * Constant/static values for internal usage.
  */
 public class Constant {
-    // default value for search key
-    public static final String VECTOR_TAG = "$0";
     public static final String VECTOR_FIELD = "anns_field";
     public static final String TEXT_FIELD = "text_field";
     public static final String VECTOR_DIM = "dim";
     public static final String MAX_LENGTH = "max_length";
     public static final String TOP_K = "topk";
-    public static final String IGNORE_GROWING = "ignore_growing";
     public static final String INDEX_TYPE = "index_type";
     public static final String METRIC_TYPE = "metric_type";
-    public static final String ROUND_DECIMAL = "round_decimal";
     public static final String PARAMS = "params";
-    public static final String ROW_COUNT = "row_count";
-    public static final String BUCKET = "bucket";
-    public static final String FAILED_REASON = "failed_reason";
-    public static final String IMPORT_FILES = "files";
-    public static final String IMPORT_COLLECTION = "collection";
-    public static final String IMPORT_PARTITION = "partition";
-    public static final String IMPORT_PROGRESS = "progress_percent";
     public static final String DEFAULT_INDEX_NAME = "";
-    public final static String OFFSET = "offset";
-    public final static String LIMIT = "limit";
-
-    // constant values for general
-    public static final String TTL_SECONDS = "collection.ttl.seconds";
-
-    // max value for waiting loading collection/partition interval, unit: millisecond
-    public static final Long MAX_WAITING_LOADING_INTERVAL = 2000L;
-
-    // max value for waiting loading collection/partition timeout,  unit: second
-    public static final Long MAX_WAITING_LOADING_TIMEOUT = 300L;
-
-    // max value for waiting flushing collection/partition interval, unit: millisecond
-    public static final Long MAX_WAITING_FLUSHING_INTERVAL = 2000L;
-
-    // max value for waiting flushing collection/partition timeout,  unit: second
-    public static final Long MAX_WAITING_FLUSHING_TIMEOUT = 300L;
-
-    // max value for waiting create index interval, unit: millisecond
-    public static final Long MAX_WAITING_INDEX_INTERVAL = 2000L;
-
-
-    // set this value for "withGuaranteeTimestamp" of QueryParam/SearchParam
-    // to instruct server execute query/search immediately.
-    public static final Long GUARANTEE_EVENTUALLY_TS = 1L;
-
-    // set this value for "withGuaranteeTimestamp" of QueryParam/SearchParam
-    // to instruct server execute query/search after all DML operations finished.
-    public static final Long GUARANTEE_STRONG_TS = 0L;
-
-    // high level api
-    public static final String VECTOR_FIELD_NAME_DEFAULT  = "vector";
-    public static final String PRIMARY_FIELD_NAME_DEFAULT = "id";
-    public static final String VECTOR_INDEX_NAME_DEFAULT  = "vector_idx";
-    public static final Long LIMIT_DEFAULT = 100L;
-    public static final Long OFFSET_DEFAULT = 0L;
-    public static final String ALL_OUTPUT_FIELDS = "*";
-
+    public static final String BATCH_NORMALIZE = "batch_normalize";
 }

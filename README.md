@@ -11,12 +11,11 @@ You can use Apache Maven to download the SDK.
 <dependency>
     <groupId>io.github.liumy213</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>
-    <version>0.0.12</version>
+    <version>0.0.14</version>
 </dependency>
 ```
 
 ## Usage
-
 
 ### Connect to server
 
@@ -40,18 +39,12 @@ FieldType idField = FieldType.newBuilder()
         .withName(idFieldName)
         .withDataType(DataType.Int64).build();
 
-String vectorFieldName = "vector";
-FieldType vectorField = FieldType.newBuilder()
-        .withName(vectorFieldName)
-        .withDataType(DataType.FloatVector)
-        .withDimension(300)
-        .build();
-
 String textFieldName = "text";
 FieldType textField = FieldType.newBuilder()
         .withName(textFieldName)
         .withDataType(DataType.String)
         .withModelType(ModelType.SIMCSE)
+        .withBatchNormalize(true)
         .withMaxLength(512)
         .build();
 ```
@@ -63,7 +56,6 @@ String collectionName = "collection_name";
 CreateCollectionParam createCollectionParam = CreateCollectionParam.newBuilder()
         .withCollectionName(collectionName)
         .addFieldType(idField)
-        .addFieldType(vectorField)
         .addFieldType(textField)
         .build();
 vectorSearchServiceClient.createCollection(createCollectionParam);
@@ -93,7 +85,6 @@ textFields.add(new InsertParam.Field(idFieldName, idList));
 textFields.add(new InsertParam.Field(textFieldName, textRows));
 InsertParam textInsertParam = InsertParam.newBuilder()
         .withCollectionName(collectionName)
-        .withPartitionName(partitionName)
         .withFields(textFields)
         .build();
 vectorSearchServiceClient.insert(textInsertParam);
@@ -106,7 +97,6 @@ List<String> searchText = new ArrayList<>();
 searchText.add("向量检索便是对这类结构化的数据进行快速搜索和匹配的方法。");
 SearchParam textSearchParam = SearchParam.newBuilder()
         .withCollectionName(collectionName)
-        .withMetricType(MetricType.L2)
         .withTopK(10)
         .withTexts(searchText)
         .withTextFieldName(textFieldName)
@@ -134,7 +124,7 @@ DropIndexParam dropIndexParam = DropIndexParam.newBuilder()
 client.dropIndex(dropIndexParam);
 ```
 
-### Drop index
+### Drop Collection
 Deleting a collection will delete the index that was created and all the data
 ```java
 DropCollectionParam dropCollectionParam = DropCollectionParam.newBuilder()

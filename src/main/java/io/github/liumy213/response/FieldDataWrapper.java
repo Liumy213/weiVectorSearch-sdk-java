@@ -1,7 +1,5 @@
 package io.github.liumy213.response;
 
-import com.alibaba.fastjson.JSONObject;
-import com.google.protobuf.ByteString;
 import com.google.protobuf.ProtocolStringList;
 import io.github.liumy213.exception.IllegalResponseException;
 import io.github.liumy213.exception.ParamException;
@@ -9,10 +7,8 @@ import io.github.liumy213.rpc.DataType;
 import io.github.liumy213.rpc.FieldData;
 import lombok.NonNull;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 
 
@@ -134,10 +130,5 @@ public class FieldDataWrapper {
             throw new ParamException("index out of range");
         }
         return getFieldData().get(index);
-    }
-
-    private JSONObject parseObjectData(int index) {
-        Object object = valueByIdx(index);
-        return JSONObject.parseObject(new String((byte[])object));
     }
 }

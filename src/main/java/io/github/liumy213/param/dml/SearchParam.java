@@ -19,9 +19,7 @@
 
 package io.github.liumy213.param.dml;
 
-import com.baidu.cloud.thirdparty.google.common.collect.Lists;
 import io.github.liumy213.exception.ParamException;
-import io.github.liumy213.param.Constant;
 import io.github.liumy213.param.MetricType;
 import io.github.liumy213.param.ParamUtils;
 import lombok.Getter;
@@ -29,6 +27,7 @@ import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -37,8 +36,6 @@ import java.util.List;
 @Getter
 public class SearchParam {
     private final String collectionName;
-    private final List<String> partitionNames;
-    private final String metricType;
     private final String vectorFieldName;
     private final String textFieldName;
     private final int topK;
@@ -51,8 +48,6 @@ public class SearchParam {
 
     private SearchParam(@NonNull Builder builder) {
         this.collectionName = builder.collectionName;
-        this.partitionNames = builder.partitionNames;
-        this.metricType = builder.metricType.name();
         this.vectorFieldName = builder.vectorFieldName;
         this.textFieldName = builder.textFieldName;
         this.topK = builder.topK;
@@ -73,13 +68,11 @@ public class SearchParam {
      */
     public static class Builder {
         private String collectionName;
-        private final List<String> partitionNames = Lists.newArrayList();
-        private MetricType metricType = MetricType.L2;
         private String vectorFieldName;
         private String textFieldName;
         private Integer topK;
         private String expr = "";
-        private final List<String> outFields = Lists.newArrayList();
+        private final List<String> outFields = new ArrayList<>();
         private List<?> vectors;
         private List<String> texts;
         private Long NQ;
@@ -96,41 +89,6 @@ public class SearchParam {
          */
         public Builder withCollectionName(@NonNull String collectionName) {
             this.collectionName = collectionName;
-            return this;
-        }
-
-        /**
-         * Sets partition names list to specify search scope (Optional).
-         *
-         * @param partitionNames partition names list
-         * @return <code>Builder</code>
-         */
-        public Builder withPartitionNames(@NonNull List<String> partitionNames) {
-            partitionNames.forEach(this::addPartitionName);
-            return this;
-        }
-
-        /**
-         * Adds a partition to specify search scope (Optional).
-         *
-         * @param partitionName partition name
-         * @return <code>Builder</code>
-         */
-        public Builder addPartitionName(@NonNull String partitionName) {
-            if (!this.partitionNames.contains(partitionName)) {
-                this.partitionNames.add(partitionName);
-            }
-            return this;
-        }
-
-        /**
-         * Sets metric type of ANN searching.
-         *
-         * @param metricType metric type
-         * @return <code>Builder</code>
-         */
-        public Builder withMetricType(@NonNull MetricType metricType) {
-            this.metricType = metricType;
             return this;
         }
 
@@ -259,10 +217,6 @@ public class SearchParam {
                 throw new ParamException("TopK value is illegal");
             }
 
-            if (metricType == MetricType.INVALID) {
-                throw new ParamException("Metric type is invalid");
-            }
-
             if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
                 if (vectors == null || vectors.isEmpty()) {
                     throw new ParamException("Target vectors can not be empty");
@@ -283,10 +237,6 @@ public class SearchParam {
                         }
                     }
 
-                    // check metric type
-                    if (!ParamUtils.IsFloatMetric(metricType)) {
-                        throw new ParamException("Target vector is float but metric type is incorrect");
-                    }
                 } else if (vectors.get(0) instanceof ByteBuffer) {
                     // binary vectors
                     ByteBuffer first = (ByteBuffer) vectors.get(0);
@@ -296,11 +246,6 @@ public class SearchParam {
                         if (dim != temp.position()) {
                             throw new ParamException("Target vector dimension must be equal");
                         }
-                    }
-
-                    // check metric type
-                    if (!ParamUtils.IsBinaryMetric(metricType)) {
-                        throw new ParamException("Target vector is binary but metric type is incorrect");
                     }
                 } else {
                     throw new ParamException("Target vector type must be List<Float>");
@@ -327,8 +272,6 @@ public class SearchParam {
         if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
             return "SearchParam{" +
                     "collectionName='" + collectionName + '\'' +
-                    ", partitionNames='" + partitionNames.toString() + '\'' +
-                    ", metricType=" + metricType +
                     ", target vectors count=" + vectors.size() +
                     ", vectorFieldName='" + vectorFieldName + '\'' +
                     ", topK=" + topK +
@@ -339,8 +282,6 @@ public class SearchParam {
         } else {
             return "SearchParam{" +
                     "collectionName='" + collectionName + '\'' +
-                    ", partitionNames='" + partitionNames.toString() + '\'' +
-                    ", metricType=" + metricType +
                     ", target text count=" + texts.size() +
                     ", vectorFieldName='" + textFieldName + '\'' +
                     ", topK=" + topK +

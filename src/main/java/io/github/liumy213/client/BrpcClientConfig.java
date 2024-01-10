@@ -9,14 +9,14 @@ import com.baidu.cloud.starlight.core.rpc.proxy.JDKProxyFactory;
 public class BrpcClientConfig {
     public BrpcClientConfig() {}
     public BrpcClientConfig(String brpcHost, int brpcPort) {
-        config = new TransportConfig(); // 传输配置
+        config = new TransportConfig();
         starlightClient = new SingleStarlightClient(brpcHost, brpcPort, config);
         starlightClient.init();
 
         // 服务配置
-        clientConfig = new ServiceConfig(); // 服务配置
+        clientConfig = new ServiceConfig();
         clientConfig.setProtocol("brpc");
-        clientConfig.setServiceId("VectorSearchService"); // 跨语言时指定服务端定义的serviceName
+        clientConfig.setServiceId("VectorSearchService");
 
         proxyFactory = new JDKProxyFactory();
     }

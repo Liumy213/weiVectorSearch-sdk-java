@@ -22,10 +22,6 @@ package io.github.liumy213.exception;
 
 import io.github.liumy213.param.R;
 
-/**
- * Interfaces including <code>search</code>/<code>search</code>/<code>loadCollection</code> might 
- * throw this exception when server return illegal response. It may indicate a bug in server.
- */
 public class IllegalResponseException extends VectorSearchException {
     public IllegalResponseException(String msg) {
         super(msg, R.Status.IllegalResponse.getCode());

@@ -21,10 +21,6 @@ package io.github.liumy213.param;
 
 import lombok.Getter;
 
-/**
- * Represents the available index types.
- * For more information: @see <a href="https://milvus.io/docs/v2.0.0/index_selection.md">Index Types</a>
- */
 public enum IndexType {
     INVALID,
     //Only supported for float vectors
@@ -32,7 +28,7 @@ public enum IndexType {
 //    IVF_FLAT(2),
 //    IVF_PQ(3),
 //    HNSW(4),
-//    DISKANN(5),
+    DISKANN(2),
     ;
 
     @Getter

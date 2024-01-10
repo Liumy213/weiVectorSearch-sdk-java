@@ -1,16 +1,15 @@
 package io.github.liumy213.response.basic;
 
-import com.alibaba.fastjson.JSONObject;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.response.FieldDataWrapper;
-import io.github.liumy213.response.QueryResultsWrapper;
+import io.github.liumy213.response.RowRecord;
 import io.github.liumy213.rpc.FieldData;
 
 import java.util.List;
 
 public abstract class RowRecordWrapper {
 
-    public abstract List<QueryResultsWrapper.RowRecord> getRowRecords();
+    public abstract List<RowRecord> getRowRecords();
 
     /**
      * Gets a row record from result.
@@ -18,7 +17,7 @@ public abstract class RowRecordWrapper {
      *
      * @return <code>RowRecord</code> a row record of the result
      */
-    protected QueryResultsWrapper.RowRecord buildRowRecord(QueryResultsWrapper.RowRecord record, long index) {
+    protected RowRecord buildRowRecord(RowRecord record, long index) {
         for (String outputKey : getOutputFields()) {
             for (FieldData field : getFieldDataList()) {
                 if (outputKey.equals(field.getFieldName())) {

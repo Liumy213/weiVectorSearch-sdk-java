@@ -1,10 +1,12 @@
 package io.github.liumy213.response;
 
-import com.alibaba.fastjson.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.github.liumy213.exception.IllegalResponseException;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.response.basic.RowRecordWrapper;
-import io.github.liumy213.rpc.*;
+import io.github.liumy213.rpc.FieldData;
+import io.github.liumy213.rpc.LongArray;
+import io.github.liumy213.rpc.SearchResultData;
 import lombok.Getter;
 import lombok.NonNull;
 
@@ -42,11 +44,11 @@ public class SearchResultsWrapper extends RowRecordWrapper {
     }
 
     @Override
-    public List<QueryResultsWrapper.RowRecord> getRowRecords() {
-        List<QueryResultsWrapper.RowRecord> records = new ArrayList<>();
+    public List<RowRecord> getRowRecords() {
+        List<RowRecord> records = new ArrayList<>();
         long topK = results.getTopK();
         for (int i = 0; i < topK; ++i) {
-            QueryResultsWrapper.RowRecord rowRecord = buildRowRecord(i);
+            RowRecord rowRecord = buildRowRecord(i);
             records.add(rowRecord);
         }
         return records;
@@ -58,8 +60,8 @@ public class SearchResultsWrapper extends RowRecordWrapper {
      *
      * @return <code>RowRecord</code> a row record of the result
      */
-    protected QueryResultsWrapper.RowRecord buildRowRecord(long index) {
-        QueryResultsWrapper.RowRecord record = new QueryResultsWrapper.RowRecord();
+    protected RowRecord buildRowRecord(long index) {
+        RowRecord record = new RowRecord();
 
         List<IDScore> idScore = getIDScore(0);
         record.put("id", idScore.get((int) index).getLongID());
@@ -246,7 +248,7 @@ public class SearchResultsWrapper extends RowRecordWrapper {
                 // find the value from dynamic field
                 Object meta = fieldValues.get("$meta");
                 if (meta != null) {
-                    JSONObject jsonMata = (JSONObject)meta;
+                    JsonNode jsonMata = (JsonNode) meta;
                     Object innerObj = jsonMata.get(keyName);
                     if (innerObj != null) {
                         return innerObj;

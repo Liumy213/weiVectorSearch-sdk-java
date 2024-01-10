@@ -1,14 +1,10 @@
 package io.github.liumy213.param;
 
-import com.alibaba.fastjson.JSONObject;
-import com.baidu.cloud.thirdparty.google.common.collect.Lists;
-import com.google.protobuf.ByteString;
 import io.github.liumy213.common.utils.JacksonUtils;
 import io.github.liumy213.exception.IllegalResponseException;
 import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.collection.FieldType;
 import io.github.liumy213.param.dml.InsertParam;
-import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.dml.UpsertParam;
 import io.github.liumy213.response.DescCollResponseWrapper;
@@ -20,8 +16,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -56,12 +50,12 @@ public class ParamUtils {
                 int dim = fieldSchema.getDimension();
                 for (int i = 0; i < values.size(); ++i) {
                     // is List<> ?
-                    Object value  = values.get(i);
+                    Object value = values.get(i);
                     if (!(value instanceof List)) {
                         throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
                     }
                     // is List<Float> ?
-                    List<?> temp = (List<?>)value;
+                    List<?> temp = (List<?>) value;
                     for (Object v : temp) {
                         if (!(v instanceof Float)) {
                             throw new ParamException(String.format(errMsgs.get(dataType), fieldSchema.getName()));
@@ -176,7 +170,7 @@ public class ParamUtils {
      * @return boolean type
      */
     public static boolean IsVectorIndex(IndexType idx) {
-        return idx != IndexType.INVALID && idx.getCode() <= IndexType.FLAT.getCode();
+        return idx != IndexType.INVALID && idx.getCode() <= IndexType.DISKANN.getCode();
     }
 
     /**
@@ -196,7 +190,6 @@ public class ParamUtils {
 
     public static class InsertBuilderWrapper {
         private InsertRequest.Builder insertBuilder;
-        private UpsertRequest.Builder upsertBuilder;
 
         public InsertBuilderWrapper(@NonNull InsertParam requestParam,
                                     DescCollResponseWrapper wrapper) {
@@ -209,30 +202,9 @@ public class ParamUtils {
             fillFieldsData(requestParam, wrapper);
         }
 
-        public InsertBuilderWrapper(@NonNull UpsertParam requestParam,
-                                    DescCollResponseWrapper wrapper) {
-            String collectionName = requestParam.getCollectionName();
-
-            // generate upsert request builder
-            upsertBuilder = UpsertRequest.newBuilder()
-                    .setCollectionName(collectionName)
-                    .setNumRows(requestParam.getRowCount());
-            fillFieldsData(requestParam, wrapper);
-        }
-
         private void addFieldsData(FieldData value) {
             if (insertBuilder != null) {
                 insertBuilder.addFieldsData(value);
-            } else if (upsertBuilder != null) {
-                upsertBuilder.addFieldsData(value);
-            }
-        }
-
-        private void setPartitionName(String value) {
-            if (insertBuilder != null) {
-                insertBuilder.setPartitionName(value);
-            } else if (upsertBuilder != null) {
-                upsertBuilder.setPartitionName(value);
             }
         }
 
@@ -273,22 +245,12 @@ public class ParamUtils {
             }
             throw new ParamException("Unable to build insert request since no input");
         }
-
-        public UpsertRequest buildUpsertRequest() {
-            if (upsertBuilder != null) {
-                return upsertBuilder.build();
-            }
-            throw new ParamException("Unable to build upsert request since no input");
-        }
     }
 
     @SuppressWarnings("unchecked")
     public static SearchRequest convertSearchParam(@NonNull SearchParam requestParam) throws ParamException {
         SearchRequest.Builder builder = SearchRequest.newBuilder()
                 .setCollectionName(requestParam.getCollectionName());
-        if (!requestParam.getPartitionNames().isEmpty()) {
-            requestParam.getPartitionNames().forEach(builder::addPartitionNames);
-        }
 
         // prepare target vectors
         // TODO: check target vector dimension(use DescribeCollection get schema to compare)
@@ -302,7 +264,7 @@ public class ParamUtils {
         }
         List<String> texts = requestParam.getTexts();
         if (texts != null && texts.size() > 0) {
-            for (String text :texts) {
+            for (String text : texts) {
                 builder.addTexts(text);
             }
         }
@@ -327,27 +289,16 @@ public class ParamUtils {
                         KeyValuePair.newBuilder()
                                 .setKey(Constant.TOP_K)
                                 .setValue(String.valueOf(requestParam.getTopK()))
-                                .build())
-                .addSearchParams(
-                        KeyValuePair.newBuilder()
-                                .setKey(Constant.METRIC_TYPE)
-                                .setValue(requestParam.getMetricType())
                                 .build());
 
         if (null != requestParam.getParams() && !requestParam.getParams().isEmpty()) {
             try {
-            Map<String, Object> paramMap = JacksonUtils.fromJson(requestParam.getParams(),Map.class);
-            String offset = paramMap.getOrDefault(Constant.OFFSET, 0).toString();
-            builder.addSearchParams(
-                    KeyValuePair.newBuilder()
-                            .setKey(Constant.OFFSET)
-                            .setValue(offset)
-                            .build());
-            builder.addSearchParams(
-                    KeyValuePair.newBuilder()
-                            .setKey(Constant.PARAMS)
-                            .setValue(requestParam.getParams())
-                            .build());
+                Map<String, Object> paramMap = JacksonUtils.fromJson(requestParam.getParams(), Map.class);
+                builder.addSearchParams(
+                        KeyValuePair.newBuilder()
+                                .setKey(Constant.PARAMS)
+                                .setValue(requestParam.getParams())
+                                .build());
             } catch (IllegalArgumentException e) {
                 throw new ParamException(e.getMessage() + e.getCause().getMessage());
             }
@@ -362,41 +313,6 @@ public class ParamUtils {
         if (requestParam.getExpr() != null && !requestParam.getExpr().isEmpty()) {
             builder.setDsl(requestParam.getExpr());
         }
-
-        return builder.build();
-    }
-
-    public static QueryRequest convertQueryParam(@NonNull QueryParam requestParam) {
-        QueryRequest.Builder builder = QueryRequest.newBuilder()
-                .setCollectionName(requestParam.getCollectionName())
-                .addAllPartitionNames(requestParam.getPartitionNames())
-                .addAllOutputFields(requestParam.getOutFields())
-                .setExpr(requestParam.getExpr())
-                .setTravelTimestamp(requestParam.getTravelTimestamp());
-
-        // set offset and limit value.
-        // directly pass the two values, the server will verify them.
-        long offset = requestParam.getOffset();
-        if (offset > 0) {
-            builder.addQueryParams(KeyValuePair.newBuilder()
-                    .setKey(Constant.OFFSET)
-                    .setValue(String.valueOf(offset))
-                    .build());
-        }
-
-        long limit = requestParam.getLimit();
-        if (limit > 0) {
-            builder.addQueryParams(KeyValuePair.newBuilder()
-                    .setKey(Constant.LIMIT)
-                    .setValue(String.valueOf(limit))
-                    .build());
-        }
-
-        // ignore growing
-        builder.addQueryParams(KeyValuePair.newBuilder()
-                .setKey(Constant.IGNORE_GROWING)
-                .setValue(String.valueOf(requestParam.isIgnoreGrowing()))
-                .build());
 
         return builder.build();
     }

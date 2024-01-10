@@ -166,6 +166,16 @@ public class FieldType {
         }
 
         /**
+         * Sets whether normalization should be performed.
+         * @param isBatchNormalize bool of normalization
+         * @return <code>Builder</code>
+         */
+        public Builder withBatchNormalize(@NonNull boolean isBatchNormalize) {
+            this.typeParams.put(Constant.BATCH_NORMALIZE, Boolean.toString(isBatchNormalize));
+            return this;
+        }
+
+        /**
          * Verifies parameters and creates a new {@link FieldType} instance.
          *
          * @return {@link FieldType}
@@ -203,6 +213,10 @@ public class FieldType {
                 } catch (NumberFormatException e) {
                     throw new ParamException("Vector field dimension must be an integer number");
                 }
+
+                if (!typeParams.containsKey(Constant.BATCH_NORMALIZE)) {
+                    typeParams.put(Constant.BATCH_NORMALIZE, Boolean.toString(false));
+                }
             }
 
             if (dataType == DataType.String) {
@@ -217,6 +231,10 @@ public class FieldType {
                     }
                 } catch (NumberFormatException e) {
                     throw new ParamException("String field max length must be an integer number");
+                }
+
+                if (!typeParams.containsKey(Constant.BATCH_NORMALIZE)) {
+                    typeParams.put(Constant.BATCH_NORMALIZE, Boolean.toString(false));
                 }
             }
 

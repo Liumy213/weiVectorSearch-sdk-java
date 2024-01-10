@@ -5,11 +5,9 @@ import io.github.liumy213.param.R;
 import io.github.liumy213.param.RpcStatus;
 import io.github.liumy213.param.collection.*;
 import io.github.liumy213.param.dml.InsertParam;
-import io.github.liumy213.param.dml.QueryParam;
 import io.github.liumy213.param.dml.SearchParam;
 import io.github.liumy213.param.index.CreateIndexParam;
 import io.github.liumy213.param.index.DropIndexParam;
-import io.github.liumy213.param.partition.*;
 import io.github.liumy213.rpc.*;
 import lombok.NonNull;
 
@@ -106,21 +104,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     }
 
     @Override
-    public R<RpcStatus> createPartition(CreatePartitionParam requestParam) {
-        return retry(()-> super.createPartition(requestParam));
-    }
-
-    @Override
-    public R<RpcStatus> dropPartition(DropPartitionParam requestParam) {
-        return retry(()-> super.dropPartition(requestParam));
-    }
-
-    @Override
-    public R<Boolean> hasPartition(HasPartitionParam requestParam) {
-        return retry(()-> super.hasPartition(requestParam));
-    }
-
-    @Override
     public R<RpcStatus> createIndex(CreateIndexParam requestParam) {
         return retry(()-> super.createIndex(requestParam));
     }
@@ -138,11 +121,6 @@ public class VectorSearchServiceClient extends AbstractVectorSearchBrpcClient {
     @Override
     public R<SearchResponse> search(SearchParam requestParam) {
         return retry(()-> super.search(requestParam));
-    }
-
-    @Override
-    public R<QueryResponse> query(QueryParam requestParam) {
-        return retry(()-> super.query(requestParam));
     }
 
 }

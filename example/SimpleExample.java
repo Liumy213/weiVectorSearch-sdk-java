@@ -31,18 +31,12 @@ public class SimpleExample {
                 .withName(idFieldName)
                 .withDataType(DataType.Int64).build();
 
-        String vectorFieldName = "vector";
-        FieldType vectorField = FieldType.newBuilder()
-                .withName(vectorFieldName)
-                .withDataType(DataType.FloatVector)
-                .withDimension(300)
-                .build();
-
         String textFieldName = "text";
         FieldType textField = FieldType.newBuilder()
                 .withName(textFieldName)
                 .withDataType(DataType.String)
                 .withModelType(ModelType.SIMCSE)
+                .withBatchNormalize(true)
                 .withMaxLength(512)
                 .build();
 
@@ -59,13 +53,11 @@ public class SimpleExample {
         client.createCollection(createCollectionParam);
 
         // Create an index type on the vector field or text field.
-        String INDEX_PARAM = "{\"nlist\":1024}";
         CreateIndexParam createIndexParam = CreateIndexParam.newBuilder()
                 .withCollectionName(collectionName)
                 .withFieldName(textFieldName)
-                .withIndexType(IndexType.IVF_FLAT)
+                .withIndexType(IndexType.FLAT)
                 .withMetricType(MetricType.IP)
-                .withExtraParam(INDEX_PARAM)
                 .build();
         client.createIndex(createIndexParam);
 
@@ -79,7 +71,6 @@ public class SimpleExample {
         textFields.add(new InsertParam.Field(textFieldName, textRows));
         InsertParam textInsertParam = InsertParam.newBuilder()
                 .withCollectionName(collectionName)
-                .withPartitionName(partitionName)
                 .withFields(textFields)
                 .build();
         client.insert(textInsertParam);
@@ -89,7 +80,6 @@ public class SimpleExample {
         searchText.add("向量检索便是对这类结构化的数据进行快速搜索和匹配的方法。");
         SearchParam textSearchParam = SearchParam.newBuilder()
                 .withCollectionName(collectionName)
-                .withMetricType(MetricType.L2)
                 .withTopK(10)
                 .withTexts(searchText)
                 .withTextFieldName(textFieldName)

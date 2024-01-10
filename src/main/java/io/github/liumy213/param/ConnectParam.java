@@ -1,16 +1,9 @@
 package io.github.liumy213.param;
 
-
-//import com.weibo.weivectorsearch.exception.ParamException;
 import io.github.liumy213.exception.ParamException;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.ToString;
-import org.apache.commons.lang3.StringUtils;
-
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Parameters for client connection.

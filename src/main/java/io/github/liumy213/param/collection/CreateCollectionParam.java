@@ -136,6 +136,9 @@ public class CreateCollectionParam {
                     throw new ParamException("FloatVector and String field can not be same time to create, only one field is allowed in a collection");
                 }
             }
+            if (!hasVectorField && !hasStringField) {
+                throw new ParamException("FloatVector and String field must have one");
+            }
 
             return new CreateCollectionParam(this);
         }

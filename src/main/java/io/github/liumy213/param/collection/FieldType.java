@@ -170,7 +170,7 @@ public class FieldType {
          * @param isBatchNormalize bool of normalization
          * @return <code>Builder</code>
          */
-        public Builder withBatchNormalize(@NonNull boolean isBatchNormalize) {
+        public Builder withBatchNormalize(boolean isBatchNormalize) {
             this.typeParams.put(Constant.BATCH_NORMALIZE, Boolean.toString(isBatchNormalize));
             return this;
         }

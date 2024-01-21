@@ -20,13 +20,11 @@
 package io.github.liumy213.param.dml;
 
 import io.github.liumy213.exception.ParamException;
-import io.github.liumy213.param.MetricType;
 import io.github.liumy213.param.ParamUtils;
 import lombok.Getter;
 import lombok.NonNull;
 import org.apache.commons.lang3.StringUtils;
 
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,8 +39,7 @@ public class SearchParam {
     private final int topK;
     private final String expr;
     private final List<String> outFields;
-    private final List<?> vectors;
-    private final List<String> texts;
+    private final List<?> searchData;
     private final Long NQ;
     private final String params;
 
@@ -53,8 +50,7 @@ public class SearchParam {
         this.topK = builder.topK;
         this.expr = builder.expr;
         this.outFields = builder.outFields;
-        this.vectors = builder.vectors;
-        this.texts = builder.texts;
+        this.searchData = builder.searchData;
         this.NQ = builder.NQ;
         this.params = builder.params;
     }
@@ -73,8 +69,7 @@ public class SearchParam {
         private Integer topK;
         private String expr = "";
         private final List<String> outFields = new ArrayList<>();
-        private List<?> vectors;
-        private List<String> texts;
+        private List<?> searchData;
         private Long NQ;
         private String params = "{}";
 
@@ -162,27 +157,14 @@ public class SearchParam {
         /**
          * Sets the target vectors.
          *
-         * @param vectors list of target vectors:
-         *                if vector type is FloatVector, vectors is List of List Float;
-         *                if vector type is BinaryVector, vectors is List of ByteBuffer;
+         * @param searchData list of target vectors or texts:
+         *                if type is List, searchData is List of List Float;
+         *                if type is String, vectors is List of String;
          * @return <code>Builder</code>
          */
-        public Builder withVectors(@NonNull List<?> vectors) {
-            this.vectors = vectors;
-            this.NQ = (long) vectors.size();
-            return this;
-        }
-
-        /**
-         * Sets the target texts.
-         *
-         * @param texts list of target texts:
-         *                if text type is String, texts is List of String;
-         * @return <code>Builder</code>
-         */
-        public Builder withTexts(@NonNull List<String> texts) {
-            this.texts = texts;
-            this.NQ = (long) texts.size();
+        public Builder withSearchData(@NonNull List<?> searchData) {
+            this.searchData = searchData;
+            this.NQ = (long) searchData.size();
             return this;
         }
 
@@ -218,32 +200,21 @@ public class SearchParam {
             }
 
             if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
-                if (vectors == null || vectors.isEmpty()) {
+                if (searchData == null || searchData.isEmpty()) {
                     throw new ParamException("Target vectors can not be empty");
                 }
 
-                if (vectors.get(0) instanceof List) {
+                if (searchData.get(0) instanceof List) {
                     // float vectors
-                    List<?> first = (List<?>) vectors.get(0);
+                    List<?> first = (List<?>) searchData.get(0);
                     if (!(first.get(0) instanceof Float)) {
                         throw new ParamException("Float vector field's value must be Lst<Float>");
                     }
 
                     int dim = first.size();
-                    for (int i = 1; i < vectors.size(); ++i) {
-                        List<?> temp = (List<?>) vectors.get(i);
+                    for (int i = 1; i < searchData.size(); ++i) {
+                        List<?> temp = (List<?>) searchData.get(i);
                         if (dim != temp.size()) {
-                            throw new ParamException("Target vector dimension must be equal");
-                        }
-                    }
-
-                } else if (vectors.get(0) instanceof ByteBuffer) {
-                    // binary vectors
-                    ByteBuffer first = (ByteBuffer) vectors.get(0);
-                    int dim = first.position();
-                    for (int i = 1; i < vectors.size(); ++i) {
-                        ByteBuffer temp = (ByteBuffer) vectors.get(i);
-                        if (dim != temp.position()) {
                             throw new ParamException("Target vector dimension must be equal");
                         }
                     }
@@ -253,8 +224,12 @@ public class SearchParam {
             }
 
             if (textFieldName != null && !StringUtils.isBlank(textFieldName)) {
-                if (texts == null || texts.isEmpty()) {
+                if (searchData == null || searchData.isEmpty()) {
                     throw new ParamException("Target texts can not be empty");
+                }
+
+                if (!(searchData.get(0) instanceof String)) {
+                    throw new ParamException("Target search data type must be List<String>");
                 }
             }
 
@@ -269,26 +244,14 @@ public class SearchParam {
      */
     @Override
     public String toString() {
-        if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
-            return "SearchParam{" +
-                    "collectionName='" + collectionName + '\'' +
-                    ", target vectors count=" + vectors.size() +
-                    ", vectorFieldName='" + vectorFieldName + '\'' +
-                    ", topK=" + topK +
-                    ", nq=" + NQ +
-                    ", expr='" + expr + '\'' +
-                    ", params='" + params + '\'' +
-                    '}';
-        } else {
-            return "SearchParam{" +
-                    "collectionName='" + collectionName + '\'' +
-                    ", target text count=" + texts.size() +
-                    ", vectorFieldName='" + textFieldName + '\'' +
-                    ", topK=" + topK +
-                    ", nq=" + NQ +
-                    ", expr='" + expr + '\'' +
-                    ", params='" + params + '\'' +
-                    '}';
-        }
+        return "SearchParam{" +
+                "collectionName='" + collectionName + '\'' +
+                ", target vectors count=" + searchData.size() +
+                ", vectorFieldName='" + vectorFieldName + '\'' +
+                ", topK=" + topK +
+                ", nq=" + NQ +
+                ", expr='" + expr + '\'' +
+                ", params='" + params + '\'' +
+                '}';
     }
 }

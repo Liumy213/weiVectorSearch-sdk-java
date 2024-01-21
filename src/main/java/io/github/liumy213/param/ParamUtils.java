@@ -6,7 +6,6 @@ import io.github.liumy213.exception.ParamException;
 import io.github.liumy213.param.collection.FieldType;
 import io.github.liumy213.param.dml.InsertParam;
 import io.github.liumy213.param.dml.SearchParam;
-import io.github.liumy213.param.dml.UpsertParam;
 import io.github.liumy213.response.DescCollResponseWrapper;
 import io.github.liumy213.rpc.*;
 import lombok.Builder;
@@ -253,19 +252,25 @@ public class ParamUtils {
                 .setCollectionName(requestParam.getCollectionName());
 
         // prepare target vectors
-        // TODO: check target vector dimension(use DescribeCollection get schema to compare)
-        List<?> vectors = requestParam.getVectors();
-        if (vectors != null && vectors.size() > 0) {
-            for (Object vector : vectors) {
-                List<Float> list = (List<Float>) vector;
-                FloatArray floatArray = FloatArray.newBuilder().addAllData(list).build();
-                builder.addFloatVector(floatArray);
+        List<?> searchData = requestParam.getSearchData();
+        String vectorFieldName = requestParam.getVectorFieldName();
+        String textFieldName = requestParam.getTextFieldName();
+        if (vectorFieldName != null && !StringUtils.isBlank(vectorFieldName)) {
+            if (searchData != null && searchData.size() > 0) {
+                List<FloatArray> floatArrays = new ArrayList<>();
+                for (Object vector : searchData) {
+                    List<Float> list = (List<Float>) vector;
+                    FloatArray floatArray = FloatArray.newBuilder().addAllData(list).build();
+                    floatArrays.add(floatArray);
+                }
+                FloatArrayArray floatArrayArray = FloatArrayArray.newBuilder().addAllFloatVector(floatArrays).build();
+                builder.setSearchVectors(floatArrayArray);
             }
-        }
-        List<String> texts = requestParam.getTexts();
-        if (texts != null && texts.size() > 0) {
-            for (String text : texts) {
-                builder.addTexts(text);
+        } else if (textFieldName != null && !StringUtils.isBlank(textFieldName)) {
+            if (searchData != null && searchData.size() > 0) {
+                List<String> list = (List<String>) searchData;
+                StringArray stringArray = StringArray.newBuilder().addAllData(list).build();
+                builder.setTexts(stringArray);
             }
         }
 
@@ -308,7 +313,6 @@ public class ParamUtils {
             requestParam.getOutFields().forEach(builder::addOutputFields);
         }
 
-        // always use expression since dsl is discarded
         builder.setDslType(DslType.BoolExprV1);
         if (requestParam.getExpr() != null && !requestParam.getExpr().isEmpty()) {
             builder.setDsl(requestParam.getExpr());

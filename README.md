@@ -11,7 +11,7 @@ You can use Apache Maven to download the SDK.
 <dependency>
     <groupId>io.github.liumy213</groupId>
     <artifactId>weiVectorSearch-sdk-java</artifactId>
-    <version>0.0.14</version>
+    <version>0.0.15</version>
 </dependency>
 ```
 
@@ -98,7 +98,7 @@ searchText.add("向量检索便是对这类结构化的数据进行快速搜索�
 SearchParam textSearchParam = SearchParam.newBuilder()
         .withCollectionName(collectionName)
         .withTopK(10)
-        .withTexts(searchText)
+        .withSearchData(searchText)
         .withTextFieldName(textFieldName)
         .withParams("{}")
         .addOutField(idFieldName)
